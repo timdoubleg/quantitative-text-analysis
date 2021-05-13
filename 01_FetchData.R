@@ -54,3 +54,5 @@ for (i in 1:nrow(df)){
   download.file(df$pdf_url[i], destfile = paste0('./data/', name, '.pdf'))
 }
 
+
+# Test
