@@ -50,6 +50,7 @@ missing_df <- df[which(df$publication_date < as.Date(min_date)), ]# it does
 
 # download all pdfs
 for (i in 1:nrow(df)){
-  name = df$results.document_number[i]
+  name = df$document_number[i]
   download.file(df$pdf_url[i], destfile = paste0('./data/', name, '.pdf'))
 }
+
