@@ -49,10 +49,9 @@ min_date <- min(range(df3$publication_date)) # data goes from 1997 to 2021
 missing_df <- df[which(df$publication_date < as.Date(min_date)), ]# it does
 
 # download all pdfs
+dir.create('./data')
 for (i in 1:nrow(df)){
   name = df$document_number[i]
   download.file(df$pdf_url[i], destfile = paste0('./data/', name, '.pdf'))
 }
 
-
-# Test
