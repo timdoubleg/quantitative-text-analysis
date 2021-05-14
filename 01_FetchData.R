@@ -2,6 +2,8 @@ library(tidyverse)
 library(dplyr)
 library(httr)
 library(jsonlite)
+library(downloader)
+
 
 rm(list=ls())
 
@@ -52,6 +54,12 @@ missing_df <- df[which(df$publication_date < as.Date(min_date)), ]# it does
 dir.create('./data')
 for (i in 1:nrow(df)){
   name = df$document_number[i]
-  download.file(df$pdf_url[i], destfile = paste0('./data/', name, '.pdf'))
+  tryCatch(download(df$pdf_url[i], destfile = paste0('./data/', name, '.pdf'), timeout = 1000), 
+           error = function(e) print(paste(name, e)))
 }
+
+# der geht lange 
+# tryCatch(download('https://www.govinfo.gov/content/pkg/FR-2018-03-08/pdf/2018-04860.pdf', destfile = paste0('./data2/', name, '.pdf'), timeout = 360), 
+#          error = function(e) print(paste(name, e)))
+
 
