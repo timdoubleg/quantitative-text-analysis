@@ -36,7 +36,7 @@ df1 <- readtext(here("data"),
 
 
 find_EO_dates <- function(data, 
-                          regex = "Executive\\s{1}Order\\s{1}\\d{4,6}\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") {
+                          regex_pattern = "Executive\\s{1}Order\\s{1}\\d{4,6}\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") {
   mutate(data,
         EO_nr = 
           str_extract(text, regex_pattern) %>%
