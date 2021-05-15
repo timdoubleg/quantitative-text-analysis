@@ -88,12 +88,7 @@ corp1 <- corpus(df1)
 
 
 
-
-
 # 4 Data exploration ----
 #===================#
-
-
-
 
 
