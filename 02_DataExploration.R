@@ -25,8 +25,11 @@ Sys.setlocale("LC_ALL", "English") #not setting this to English will break as.Da
 # 2 Data import ----
 #===================#
 
+## Importing texts ----
 df1 <- readtext(here("data"),
          docvarsfrom = "filenames") 
+
+
 #The filename correspond with the federal register doc id. They do not provide additional information, thus no further docvars are specified.
 
 # Some PDFs like 08-62.pdf contain extensive parts with scanned text.
@@ -35,39 +38,48 @@ df1 <- readtext(here("data"),
 #It then extracts the EO number and the date of issuance and adds these as variables to a new dataframe df1
 
 
+
+
+
+# 3 Data cleaning ----
+#===================#
+
+## Extracting dates of issuance and executive order number ----
 find_EO_dates <- function(data, 
                           regex_pattern = "Executive\\s{1}Order\\s{1}\\d{4,6}\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") {
   mutate(data,
-        EO_nr = 
-          str_extract(text, regex_pattern) %>%
-          str_extract("\\d{4,6}") %>% 
-          as.numeric(),
-        date = 
-          str_extract(text, regex_pattern) %>% 
-          str_extract("(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") %>% 
-          as.Date(format = "%B %d, %Y"))
+         EO_nr = 
+           str_extract(text, regex_pattern) %>%
+           str_extract("\\d{4,6}") %>% 
+           as.numeric(),
+         date = 
+           str_extract(text, regex_pattern) %>% 
+           str_extract("(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") %>% 
+           as.Date(format = "%B %d, %Y"))
 }
 
 df1 <- df1 %>% find_EO_dates()
 
+
+## Inspecting the result ----
 nrow(df1) #there are 1108 documents
 range(nchar(df1$EO_nr), na.rm = TRUE) #all EO_nr have the same length, as they should
 sum(is.na(df1$EO_nr)) #there are 25 missing EO_nr values
 sum(is.na(df1$date)) #there are 25 missing date values
-sum(is.na(df1$EO_nr) | is.na(df1$date)) #25 indicates that the documents missing EO_nr are the same missing date values
+sum(is.na(df1$EO_nr) | is.na(df1$date)) #25 indicates that the documents missing EO_nr are also the ones missing date values
 
+## Trying to deal with missing values ----
 df1 %>% filter(is.na(date)) %>% data.frame() %>%  select(doc_id) #displays a df that contains all the documents with missing values
 
 #manual inspection reveals that some EOs only contain "Order" but not "Executive Order <nr>"
 
 
 
-## adapting the regex ----
-
+### Adapting the regex ----
 new_regex <- "Order\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}"
 
 df2 <- df1 %>% ## I don't understand why this code is not working! all the dates remain NA ----
-  filter(is.na(date)) %>%
+filter(is.na(date)) %>%
   find_EO_dates(regex = new_regex)
 
 sum(is.na(df1$date)) # there are still 25 missing date values, meaning the code above failed
@@ -75,7 +87,7 @@ sum(is.na(df1$date)) # there are still 25 missing date values, meaning the code 
 
 
 df1 %>% ## meanwhile, picking a single document like this somehow works, the date is correctly extracted. I don't know why  ----
-  filter(is.na(date)) %>%
+filter(is.na(date)) %>%
   filter(doc_id == "2016-29494.pdf") %>%
   select(text) %>%
   str_extract(new_regex) %>% 
@@ -85,6 +97,12 @@ df1 %>% ## meanwhile, picking a single document like this somehow works, the dat
 # right_join(df1, df2, by = "text") can't join the two df together before this issue is resolved
 
 df1<- filter(df1,!is.na(date))
+
+
+
+# 4 Data exploration ----
+#===================#
+
 
 #The following code assigns the number of words/length of an Executive order.
 corp_main <- corpus(df1)
@@ -134,16 +152,5 @@ prediction_country
 # the following code will join df1 (or the main df, if new one)
 # df_geography<-cbind(df1,pred_nm)
 
-
-
-
-
-# 3 Data cleaning ----
-#===================#
-
-
-
-# 4 Data exploration ----
-#===================#
 
 
