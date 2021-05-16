@@ -15,6 +15,10 @@ library(here)
 library(readtext)
 library(quanteda)
 library(stringr)
+library(dplyr)
+
+rm(list=ls())
+
 Sys.setenv(lang = "ENG")
 Sys.setlocale("LC_ALL", "English") #not setting this to English will break as.Date()
 
@@ -32,7 +36,7 @@ df1 <- readtext(here("data"),
 
 
 find_EO_dates <- function(data, 
-                          regex = "Executive\\s{1}Order\\s{1}\\d{4,6}\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") {
+                          regex_pattern = "Executive\\s{1}Order\\s{1}\\d{4,6}\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") {
   mutate(data,
         EO_nr = 
           str_extract(text, regex_pattern) %>%
@@ -82,6 +86,51 @@ df1 %>% ## meanwhile, picking a single document like this somehow works, the dat
 # right_join(df1, df2, by = "text") can't join the two df together before this issue is resolved
 
 corp1 <- corpus(df1)
+
+# For the geographical classification, dates do not hold much value. As such we will define the following custom stopwords.
+# Since there are many USA specific tokens, due to the origin of the USA, some USA specific stopwords will also be removed to avoid an overrepresentation of the USA.
+
+month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
+day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
+USA <- c("States", "Sec", "United","Act","Secretary","Council","State","Department","General","Section","Management","America","Committee","American","Americans","Washington")
+
+tokens_corp1 <- tokens(corp1, remove_punct = TRUE,
+                       remove_numbers = TRUE,
+                       remove_symbols = TRUE) %>%
+  tokens_remove(c(stopwords("english"),
+                  month,
+                  day,
+                  USA)) 
+
+# The model associates country specific features with ISO 3166-1 country codes. The codes for USA and China are "US" & "CN"
+
+toks_label <- tokens_lookup(tokens_corp1, dictionary = data_dictionary_newsmap_en, 
+                            levels = 3) # level 3 stands for countries
+dfmat_label <- dfm(toks_label, tolower = FALSE)
+
+dfmat_feat <- dfm(tokens_corp1, tolower = FALSE)
+dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z0-9]+", 
+                                valuetype = "regex", case_insensitive = FALSE) %>% 
+  dfm_trim(min_termfreq = 10)
+
+tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label)
+
+coef(tmod_nm,n=15)[c("US","CN")]
+
+pred_nm <- predict(tmod_nm)
+head(pred_nm,1000)
+
+# getting the frequency of countries in Executive Orders
+prediction_country<-table(pred_nm)
+prediction_country
+
+
+# the following code will join df1 (or the main df, if new one)
+# df_geography<-cbind(df1,pred_nm)
+
+
+
+
 
 # 3 Data cleaning ----
 #===================#
