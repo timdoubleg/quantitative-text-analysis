@@ -82,13 +82,19 @@ df1 %>% ## meanwhile, picking a single document like this somehow works, the dat
   str_extract("(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") %>% 
   as.Date(format = "%B %d, %Y")
 
-
 # right_join(df1, df2, by = "text") can't join the two df together before this issue is resolved
 
-corp1 <- corpus(df1)
+df1<- filter(df1,!is.na(date))
+
+#The following code assigns the number of words/length of an Executive order.
+corp_main <- corpus(df1)
+number_corp_main<-ntoken(corp_main)
+df1<-cbind(df1,number_corp_main)
 
 # For the geographical classification, dates do not hold much value. As such we will define the following custom stopwords.
 # Since there are many USA specific tokens, due to the origin of the USA, some USA specific stopwords will also be removed to avoid an overrepresentation of the USA.
+
+corp1 <- corpus(df1)
 
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
@@ -102,7 +108,7 @@ tokens_corp1 <- tokens(corp1, remove_punct = TRUE,
                   day,
                   USA)) 
 
-# The model associates country specific features with ISO 3166-1 country codes. The codes for USA and China are "US" & "CN"
+# The model associates country specific features with ISO 3166-1 country codes. The codes for USA and China for example are "US" & "CN"
 
 toks_label <- tokens_lookup(tokens_corp1, dictionary = data_dictionary_newsmap_en, 
                             levels = 3) # level 3 stands for countries
