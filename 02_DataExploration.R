@@ -75,6 +75,9 @@ documents <- documents[order(publication_date),]
 # remove unnecessary values
 rm(executive.orders, memorandums, notices, presidential.orders, proclamations)
 
+# check how many unique documents we have
+length(unique(documents$document_number))
+
 
 
 #The filename correspond with the federal register doc id. They do not provide additional information, thus no further docvars are specified.
