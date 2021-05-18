@@ -55,14 +55,28 @@ proclamations.df <- fread('./data/dataframes/proclamations.csv')
 notices.df <- fread('./data/dataframes/notices.csv')
 
 # merge dataframes based on their document_number
-executive.orders.df <- left_join(executive.orders.df, executive.orders, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
-presidential.orders.df <- left_join(presidential.orders.df, presidential.orders, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
-memorandums.df <- left_join(memorandums.df, memorandums, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
-proclamations.df <- left_join(proclamations.df, proclamations, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
-notices.df <- left_join(notices.df, notices, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
+executive.orders.df <- left_join(executive.orders.df, executive.orders, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts, type))
+presidential.orders.df <- left_join(presidential.orders.df, presidential.orders, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts, type))
+memorandums.df <- left_join(memorandums.df, memorandums, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts, type))
+proclamations.df <- left_join(proclamations.df, proclamations, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts, type))
+notices.df <- left_join(notices.df, notices, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts, type))
+
+# add variable 
+executive.orders.df$document_type <- 'executive.order'
+presidential.orders.df$document_type <- 'presidential.order'
+memorandums.df$document_type <- 'memorandum'
+proclamations.df$document_type <- 'proclamation'
+notices.df$document_type <- 'notice'
+
+# merge all dataframes together
+documents <- rbind(executive.orders.df, presidential.orders.df, memorandums.df, proclamations.df, notices.df)
+documents <- documents[order(publication_date),]
 
 # remove unnecessary values
 rm(executive.orders, memorandums, notices, presidential.orders, proclamations)
+
+# check how many unique documents we have
+length(unique(documents$document_number))
 
 
 
