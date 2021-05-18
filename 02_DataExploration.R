@@ -20,6 +20,7 @@ library(newsmap)
 library(sentimentr)
 library(data.table)
 
+
 rm(list=ls())
 
 Sys.setenv(lang = "ENG")
@@ -126,17 +127,31 @@ sum(is.na(documents$EO_nr) | is.na(documents$date))
 #keeping only data with no missing values
 documents <- filter(documents, !is.na(date)) 
 
+#importing a list of presidential documents sorted by president. contains the var "document_type"
+list_of_documents_by_clinton <- read.csv("https://www.federalregister.gov/documents/search.csv?conditions%5Bcorrection%5D=0&conditions%5Bpresident%5D=william-j-clinton&conditions%5Bpresidential_document_type%5D%5B%5D=determination&conditions%5Bpresidential_document_type%5D%5B%5D=memorandum&conditions%5Bpresidential_document_type%5D%5B%5D=notice&conditions%5Bpresidential_document_type%5D%5B%5D=presidential_order&conditions%5Bsigning_date%5D%5Byear%5D=&conditions%5Btype%5D%5B%5D=PRESDOCU&fields%5B%5D=citation&fields%5B%5D=document_number&fields%5B%5D=end_page&fields%5B%5D=html_url&fields%5B%5D=pdf_url&fields%5B%5D=type&fields%5B%5D=subtype&fields%5B%5D=publication_date&fields%5B%5D=signing_date&fields%5B%5D=start_page&fields%5B%5D=title&fields%5B%5D=disposition_notes&order=document_number&per_page=1000")
+list_of_documents_by_w.bush <- read.csv("https://www.federalregister.gov/documents/search.csv?conditions%5Bcorrection%5D=0&conditions%5Bpresident%5D=george-w-bush&conditions%5Bpresidential_document_type%5D%5B%5D=determination&conditions%5Bpresidential_document_type%5D%5B%5D=memorandum&conditions%5Bpresidential_document_type%5D%5B%5D=notice&conditions%5Bpresidential_document_type%5D%5B%5D=presidential_order&conditions%5Bsigning_date%5D%5Byear%5D=&conditions%5Btype%5D%5B%5D=PRESDOCU&fields%5B%5D=citation&fields%5B%5D=document_number&fields%5B%5D=end_page&fields%5B%5D=html_url&fields%5B%5D=pdf_url&fields%5B%5D=type&fields%5B%5D=subtype&fields%5B%5D=publication_date&fields%5B%5D=signing_date&fields%5B%5D=start_page&fields%5B%5D=title&fields%5B%5D=disposition_notes&order=document_number&per_page=1000")
+list_of_documents_by_obama <- read.csv("https://www.federalregister.gov/documents/search.csv?conditions%5Bcorrection%5D=0&conditions%5Bpresident%5D=barack-obama&conditions%5Bpresidential_document_type%5D%5B%5D=determination&conditions%5Bpresidential_document_type%5D%5B%5D=memorandum&conditions%5Bpresidential_document_type%5D%5B%5D=notice&conditions%5Bpresidential_document_type%5D%5B%5D=presidential_order&conditions%5Bsigning_date%5D%5Byear%5D=&conditions%5Btype%5D%5B%5D=PRESDOCU&fields%5B%5D=citation&fields%5B%5D=document_number&fields%5B%5D=end_page&fields%5B%5D=html_url&fields%5B%5D=pdf_url&fields%5B%5D=type&fields%5B%5D=subtype&fields%5B%5D=publication_date&fields%5B%5D=signing_date&fields%5B%5D=start_page&fields%5B%5D=title&fields%5B%5D=disposition_notes&order=document_number&per_page=1000")
+list_of_documents_by_trump <- read.csv("https://www.federalregister.gov/documents/search.csv?conditions%5Bcorrection%5D=0&conditions%5Bpresident%5D=donald-trump&conditions%5Bpresidential_document_type%5D%5B%5D=determination&conditions%5Bpresidential_document_type%5D%5B%5D=memorandum&conditions%5Bpresidential_document_type%5D%5B%5D=notice&conditions%5Bpresidential_document_type%5D%5B%5D=presidential_order&conditions%5Bsigning_date%5D%5Byear%5D=&conditions%5Btype%5D%5B%5D=PRESDOCU&fields%5B%5D=citation&fields%5B%5D=document_number&fields%5B%5D=end_page&fields%5B%5D=html_url&fields%5B%5D=pdf_url&fields%5B%5D=type&fields%5B%5D=subtype&fields%5B%5D=publication_date&fields%5B%5D=signing_date&fields%5B%5D=start_page&fields%5B%5D=title&fields%5B%5D=disposition_notes&order=document_number&per_page=1000")
+list_of_documents_by_biden <- read.csv("https://www.federalregister.gov/documents/search.csv?conditions%5Bcorrection%5D=0&conditions%5Bpresident%5D=joe-biden&conditions%5Bpresidential_document_type%5D%5B%5D=determination&conditions%5Bpresidential_document_type%5D%5B%5D=memorandum&conditions%5Bpresidential_document_type%5D%5B%5D=notice&conditions%5Bpresidential_document_type%5D%5B%5D=presidential_order&conditions%5Bsigning_date%5D%5Byear%5D=&conditions%5Btype%5D%5B%5D=PRESDOCU&fields%5B%5D=citation&fields%5B%5D=document_number&fields%5B%5D=end_page&fields%5B%5D=html_url&fields%5B%5D=pdf_url&fields%5B%5D=type&fields%5B%5D=subtype&fields%5B%5D=publication_date&fields%5B%5D=signing_date&fields%5B%5D=start_page&fields%5B%5D=title&fields%5B%5D=disposition_notes&order=document_number&per_page=1000")
 
-#adding presidents by checking the EO number. reference: https://www.federalregister.gov/presidential-documents/executive-orders
+#adding a new var "president" to the "documents" object by comparing "document_number"
 documents <- documents %>% 
-  mutate(president = case_when(
-      EO_nr >= 12945 & EO_nr <= 13197 ~ "Clinton",
-      EO_nr >= 13198 & EO_nr <= 13488 ~ "W. Bush",
-      EO_nr >= 13489 & EO_nr <= 13764 ~ "Obama",
-      EO_nr >= 13765 & EO_nr <= 13984 ~ "Trump",
-      EO_nr >= 13985 ~ "Biden",
-      ))
+  mutate(president = as.factor(case_when(
+      (EO_nr >= 12945 & EO_nr <= 13197) | document_number %in% list_of_documents_by_clinton$document_number ~ "Clinton",
+      (EO_nr >= 13198 & EO_nr <= 13488) | document_number %in% list_of_documents_by_w.bush$document_number ~ "W. Bush",
+      (EO_nr >= 13489 & EO_nr <= 13764) | document_number %in% list_of_documents_by_obama$document_number ~ "Obama",
+      (EO_nr >= 13765 & EO_nr <= 13984) | document_number %in% list_of_documents_by_trump$document_number ~ "Trump",
+      (EO_nr >= 13985) | document_number %in% list_of_documents_by_biden$document_number ~ "Biden",
+      )))
 
+#remove lists to unclutter the environment
+rm(
+  list_of_documents_by_clinton,
+  list_of_documents_by_w.bush,
+  list_of_documents_by_obama,
+  list_of_documents_by_trump,
+  list_of_documents_by_biden
+)
 
 
 
