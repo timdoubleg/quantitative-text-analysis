@@ -3,6 +3,7 @@ library(dplyr)
 library(httr)
 library(jsonlite)
 library(downloader)
+library(data.table)
 
 
 rm(list=ls())
@@ -72,6 +73,17 @@ range(exec.orders$publication_date) # data goes from 1994 to 2021
 min_date <- min(range(exec.order1$publication_date)) # data goes from 1997 to 2021
 missing_df <- df[which(exec.orders$publication_date < as.Date(min_date)), ]# it does
 
+# drop column "agencies"
+drop_column <- function(df, column) {
+  df %>% select(-column)
+}
+
+exec.orders <- drop_column(exec.orders, 'agencies')
+presidential.orders <- drop_column(presidential.orders, 'agencies')
+memorandums <- drop_column(memorandums, 'agencies')
+notices <- drop_column(notices, 'agencies')
+proclamations <- drop_column(proclamations, 'agencies')
+
 
 ### SAVE DATA -----------------------------------
 
@@ -98,4 +110,12 @@ download_pdfs(presidential.orders, 'presidential_orders')
 download_pdfs(memorandums, 'memorandums')
 download_pdfs(notices, 'notices')
 download_pdfs(proclamations, 'proclamations')
+
+# save dfs to merge later
+dir.create('./data/dataframes')
+fwrite(exec.orders, './data/dataframes/executive_orders.csv' )
+fwrite(presidential.orders, './data/dataframes/presidential_orders.csv' )
+fwrite(memorandums, './data/dataframes/memorandums.csv' )
+fwrite(notices, './data/dataframes/notices.csv' )
+fwrite(proclamations, './data/dataframes/proclamations.csv' )
 

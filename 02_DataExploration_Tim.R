@@ -22,53 +22,63 @@ library(tm)
 
 rm(list=ls())
 
-Sys.setenv(lang = "ENG")
-Sys.setlocale("LC_ALL", "English") #not setting this to English will break as.Date()
-
 # set wd to where the source file is
 # make sure you have the datafiles in a /data/ folder
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+Sys.setenv(lang = "ENG")
+Sys.setlocale("LC_ALL", "English") #not setting this to English will break as.Date()
+
+
+
+# X Backup ----
+#===================#
+# file_list <- list.files(path = './data/executive_orders/', pattern = '.pdf$')
+# file_list <- paste('./data/executive_orders/', file_list, sep = '')
+
+# # convert pdfs to text and read them in 
+# s_pdf_text <- safely(pdf_text) # helps catch errors
+# 
+# walk(file_list, ~{                                     # iterate over the files
+# 
+#   res <- s_pdf_text(.x)                                # try to read it in
+#   if (!is.null(res$result)) {                          # if successful
+# 
+#     message(sprintf("Processing [%s]", .x))
+# 
+#     txt_file <- sprintf("%stxt", sub("pdf$", "", .x))  # make a new filename
+# 
+#     unlist(res$result) %>%                             # cld be > 1 pg (which makes a list)
+#       tolower() %>%
+#       paste0(collapse="\n") %>%                        # make one big text block with line breaks
+#       cat(file=txt_file)                               # write it out
+# 
+#   } else {                                             # if not successful
+#     message(sprintf("Failure converting [%s]", .x))    # show a message
+#   }
+# 
+# })
+
 
 # 2 Data import ----
 #===================#
-file.remove('./data/00-31252.pdf')
+file.remove('./data/executive_orders/00-31252.pdf')
+file.remove('./data/executive_orders/2018-04860.pdf')
 
-test_file <- '/Users/tgraf/Google Drive/Uni SG/Master/Quantitative Text Analysis/MBFQuantitativeTextAnalysis/data/00-6126.pdf'
-pdf_text(test_file)
-readtext(test_file)
-pdf_data(test_file)
-
-file_list <- list.files(path = './data/', pattern = '.pdf$')
-file_list <- paste('./data/', file_list, sep = '')
-
-# convert pdfs to text and read them in 
-s_pdf_text <- safely(pdf_text) # helps catch errors
-
-walk(file_list, ~{                                     # iterate over the files
-
-  res <- s_pdf_text(.x)                                # try to read it in
-  if (!is.null(res$result)) {                          # if successful
-
-    message(sprintf("Processing [%s]", .x))
-
-    txt_file <- sprintf("%stxt", sub("pdf$", "", .x))  # make a new filename
-
-    unlist(res$result) %>%                             # cld be > 1 pg (which makes a list)
-      tolower() %>%
-      paste0(collapse="\n") %>%                        # make one big text block with line breaks
-      cat(file=txt_file)                               # write it out
-
-  } else {                                             # if not successful
-    message(sprintf("Failure converting [%s]", .x))    # show a message
-  }
-
-})
-
-
-df1 <- readtext('./data2/',
+read_pdfs <- function (folder_dir){
+  readtext(paste0('./data/', folder_dir),
          docvarsfrom = "filenames", 
-         ignore_missing_files = TRUE) 
+         ignore_missing_files = TRUE, 
+         verbosity = 3) 
+}
+
+executive.orders <- read_pdfs('executive_orders/')
+presidential.orders <- read_pdfs('presidential_orders/')
+memorandums <- read_pdfs('memorandums/')
+proclamations <- read_pdfs('proclamations/')
+notices <- read_pdfs('notices/')
+
+
 #The filename correspond with the federal register doc id. They do not provide additional information, thus no further docvars are specified.
 
 # Some PDFs like 08-62.pdf contain extensive parts with scanned text.
