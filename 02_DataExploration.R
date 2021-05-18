@@ -26,17 +26,51 @@ Sys.setlocale("LC_ALL", "English") #not setting this to English will break as.Da
 # 2 Data import ----
 #===================#
 
-## Importing texts ----
-df1 <- readtext(here("data")) 
+# as these pdf files are corrupt we delete them 
+file.remove('./data/executive_orders/00-31252.pdf')
+file.remove('./data/executive_orders/2018-04860.pdf')
+
+# function to read in data
+read_pdfs <- function (folder_dir){
+  readtext(paste0('./data/', folder_dir),
+           docvarsfrom = "filenames", 
+           docvarnames = 'document_number',
+           ignore_missing_files = TRUE, 
+           verbosity = 3) 
+}
+
+# read in all data
+executive.orders <- read_pdfs('executive_orders/')
+presidential.orders <- read_pdfs('presidential_orders/')
+memorandums <- read_pdfs('memorandums/')
+proclamations <- read_pdfs('proclamations/')
+notices <- read_pdfs('notices/')
+
+# merge with existing dfs to get date
+executive.orders.df <- fread('./data/dataframes/executive_orders.csv')
+presidential.orders.df <- fread('./data/dataframes/presidential_orders.csv')
+memorandums.df <- fread('./data/dataframes/memorandums.csv')
+proclamations.df <- fread('./data/dataframes/proclamations.csv')
+notices.df <- fread('./data/dataframes/notices.csv')
+
+# merge dataframes based on their document_number
+executive.orders.df <- left_join(executive.orders.df, executive.orders, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
+presidential.orders.df <- left_join(presidential.orders.df, presidential.orders, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
+memorandums.df <- left_join(memorandums.df, memorandums, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
+proclamations.df <- left_join(proclamations.df, proclamations, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
+notices.df <- left_join(notices.df, notices, on = 'document_number') %>% select(-c(doc_id, abstract, excerpts))
+
+# remove unnecessary values
+rm(executive.orders, memorandums, notices, presidential.orders, proclamations)
+
 
 
 #The filename correspond with the federal register doc id. They do not provide additional information, thus no further docvars are specified.
 
 # Some PDFs like 08-62.pdf contain extensive parts with scanned text.
 
-#The code below extractsthe pattern "Executive Order <nr> of <month> <nr>, <year>" from the texts
+#The code below extracts the pattern "Executive Order <nr> of <month> <nr>, <year>" from the texts
 #It then extracts the EO number and the date of issuance and adds these as variables to a new dataframe df1
-
 
 
 # 3 Data cleaning ----
@@ -159,20 +193,20 @@ prediction_country
 
 
 # Positiv-negagiv-Skala 
-#   >>> sentiment analysis, pro Land, über Zeit 
-#   >>> evtl. müssen Dictionaries verwendet werden bei Ländern mit wenig Daten
+#   >>> sentiment analysis, pro Land, ?ber Zeit 
+#   >>> evtl. m?ssen Dictionaries verwendet werden bei L?ndern mit wenig Daten
 #   >>> unsupervised ML?
 
-# Relevanz von Ländern über Zeit 
-#   >>> evtl mit Textlänge gewichten
+# Relevanz von L?ndern ?ber Zeit 
+#   >>> evtl mit Textl?nge gewichten
 
 # Interaktive time series Visualisierung
 
-# Weitere Daten benutzen mit API? wie begründen?
+# Weitere Daten benutzen mit API? wie begr?nden?
 
-# Präsident
+# Pr?sident
 
-# Topic analysis für ein Land mit vielen EO
+# Topic analysis f?r ein Land mit vielen EO
 
 
 
