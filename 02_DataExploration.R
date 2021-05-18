@@ -18,6 +18,7 @@ library(stringr)
 library(dplyr)
 library(newsmap)
 library(sentimentr)
+library(data.table)
 
 rm(list=ls())
 
@@ -85,7 +86,7 @@ length(unique(documents$document_number))
 # Some PDFs like 08-62.pdf contain extensive parts with scanned text.
 
 #The code below extracts the pattern "Executive Order <nr> of <month> <nr>, <year>" from the texts
-#It then extracts the EO number and the date of issuance and adds these as variables to a new dataframe df1
+#It then extracts the EO number and the date of issuance and adds these as variables to a new dataframe documents
 
 
 # 3 Data cleaning ----
@@ -105,27 +106,30 @@ find_EO_dates <- function(data,
            as.Date(format = "%B %d, %Y"))
 }
 
-df1 <- df1 %>% find_EO_dates()
+documents <- documents %>% find_EO_dates()
 
 
 ## Inspecting the result ----
-nrow(df1) #there are 1108 documents
-range(nchar(df1$EO_nr), na.rm = TRUE) #all EO_nr have the same length, as they should
-sum(is.na(df1$EO_nr)) #there are 25 missing EO_nr values
-sum(is.na(df1$date)) #there are 25 missing date values
-sum(is.na(df1$EO_nr) | is.na(df1$date)) #25 indicates that the documents missing EO_nr are also the ones missing date values
+nrow(documents)
+range(nchar(documents$EO_nr), na.rm = TRUE)
+sum(is.na(documents$EO_nr))
+sum(is.na(documents$date))
+sum(is.na(documents$EO_nr) | is.na(documents$date))
 
-df1 <- filter(df1, !is.na(date)) #keeping only data with no missing values
+#keeping only data with no missing values
+documents <- filter(documents, !is.na(date)) 
 
 
 #adding presidents by checking the EO number. reference: https://www.federalregister.gov/presidential-documents/executive-orders
-df1 <- df1 %>% 
+documents <- documents %>% 
   mutate(president = case_when(
       EO_nr >= 12945 & EO_nr <= 13197 ~ "Clinton",
       EO_nr >= 13198 & EO_nr <= 13488 ~ "W. Bush",
       EO_nr >= 13489 & EO_nr <= 13764 ~ "Obama",
       EO_nr >= 13765 & EO_nr <= 13984 ~ "Trump",
-      EO_nr >= 13985 ~ "Biden"))
+      EO_nr >= 13985 ~ "Biden",
+      ))
+
 
 
 
@@ -142,7 +146,7 @@ corp_main <- tokens(corp_main,
                     remove_symbols = TRUE) %>%
   tokens_remove(stopwords("english")) 
 
-# By adding the number of tokens to our dataframe df1, we get a fealing of the length of each EO.
+# By adding the number of tokens to our dataframe documents, we get a fealing of the length of each EO.
 
 number_corp_main<-ntoken(corp_main)
 documents<-cbind(documents,number_corp_main)
@@ -211,7 +215,7 @@ prediction_country<-table(pred_nm)
 prediction_country
 
 
-# The following code will join df1 with our predicted country labels.
+# The following code will join documents with our predicted country labels.
 documents<-cbind(documents,pred_nm)
 
 
@@ -219,7 +223,7 @@ documents<-cbind(documents,pred_nm)
 
 
 ## Trying to deal with missing values ----
-#df1 %>% filter(is.na(date)) %>% data.frame() %>%  select(doc_id) #displays a df that contains all the documents with missing values
+#documents %>% filter(is.na(date)) %>% data.frame() %>%  select(doc_id) #displays a df that contains all the documents with missing values
 
 #manual inspection reveals that some EOs only contain "Order" but not "Executive Order <nr>"
 
@@ -227,21 +231,21 @@ documents<-cbind(documents,pred_nm)
 ### Adapting the regex ----
 #new_regex <- "Order\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}"
 
-#df2 <- df1 %>% ## I don't understand why this code is not working! all the dates remain NA ----
+#df2 <- documents %>% ## I don't understand why this code is not working! all the dates remain NA ----
 #filter(is.na(date)) %>%
 # find_EO_dates(regex_pattern = new_regex)
 
-#sum(is.na(df1$date)) # there are still 25 missing date values, meaning the code above failed
+#sum(is.na(documents$date)) # there are still 25 missing date values, meaning the code above failed
 
 
-#df1 %>% ## meanwhile, picking a single document like this somehow works, the date is correctly extracted. I don't know why  ----
+#documents %>% ## meanwhile, picking a single document like this somehow works, the date is correctly extracted. I don't know why  ----
 # filter(is.na(date)) %>%
 #   filter(doc_id == "2016-29494.pdf") %>%
 #   select(text) %>%
 #   str_extract(new_regex) %>% 
 #   str_extract("(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") %>% 
 #   as.Date(format = "%B %d, %Y")
-# right_join(df1, df2, by = "text") can't join the two df together before this issue is resolved
+# right_join(documents, df2, by = "text") can't join the two df together before this issue is resolved
 
 
 
