@@ -173,19 +173,7 @@ corp_main <- tokens(corp_main,
 number_corp_main<-ntoken(corp_main)
 documents<-cbind(documents,number_corp_main)
 
-# For our analysis, we need to know the country, each EO is addressing.
-# Given our large amount of data, going manually through every document
-# seems to be too time-consuming. Furthermore, since we know that some
-# documents are for example specifically designed to address China or
-# Chinese companies without ever mentioning the word China, a dictionary
-# approach might fall short in classifying all documents according to the
-# country the EO is addressing. As such, we opted for a semisupervised model
-# for geographical document classification, called Newsmap (https://tutorials.quanteda.io/machine-learning/newsmap/).
-
-# For the geographical classification, dates do not hold much value. As such we will define the following custom stopwords.
-# Since there are many USA specific tokens, due to the origin of EOs being in the USA, some USA specific stopwords will also be removed to avoid an overrepresentation of the USA.
-
-corp1 <- corpus(documents)
+corp1 <- corpus(documents) # corpus for Newsmap
 
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
@@ -200,18 +188,9 @@ tokens_corp1 <- tokens(corp1,
                   day,
                   USA)) 
 
-# The seed dictionary below, data_dictionary_newsmap_en, is a geographical dictionary developed by Newsmap. It only contains the names of countries and capital cities.
-# The levels argument will determine the keys being recorded in our toks-label object.
-# Level 1 for example would stand for the continent level. But since we are interested in
-# countries, we have to use level 3.
-
 toks_label <- tokens_lookup(tokens_corp1, 
                             dictionary = data_dictionary_newsmap_en, 
                             levels = 3) # level 3 stands for countries
-
-# Since the dictionary only contains country and capital names, the following model, textmodel_newsmap, is going to associate country specific features with ISO 3166-1 country codes. The codes for USA and China for example are "US" & "CN"
-# The model uses two document-feature matrices. One being based on our country lables above, the second on the features in our corpus, from which we eliminated the USA-specific stopwords.
-# The second dfm will be reduced in size by pattern matching as well as by only considering values that appear at least 10 times in the dfm. 
 
 dfmat_label <- dfm(toks_label, tolower = FALSE)
 dfmat_feat <- dfm(tokens_corp1, tolower = FALSE)
@@ -220,25 +199,17 @@ dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z0-9]+",
                                 valuetype = "regex", case_insensitive = FALSE) %>% 
   dfm_trim(min_termfreq = 10)
 
+tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label) # Training the Newsmap model
 
-# Next, we will train the Newsmap model in a semi-supervised document classification approach, using the two document-feature matrices.
-tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label)
+coef(tmod_nm,n=15)[c("US","CN","IQ")] # Extraction of model coefficients
 
-coef(tmod_nm,n=15)[c("US","CN","IQ")] 
-
-#The code above extracts the model coefficients and thus gives us the strength with which the model associates certain words with a country based on our data.
-
-# The following code predicts the most strongly associated country for each EO.
-pred_nm <- predict(tmod_nm)
+pred_nm <- predict(tmod_nm) # Prediction of country labels on our documents
 head(pred_nm,1000)
 
-# Here we get the frequency of countries in the Executive Orders
-prediction_country<-table(pred_nm)
+prediction_country<-table(pred_nm) # Frequency of countries in EO
 prediction_country
 
-
-# The following code will join documents with our predicted country labels.
-documents<-cbind(documents,pred_nm)
+documents<-cbind(documents,pred_nm) # joining documents with predicted country labels
 
 
 # Junk code (will delete this at some point) ----
