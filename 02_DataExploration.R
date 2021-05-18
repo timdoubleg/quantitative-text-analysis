@@ -25,6 +25,10 @@ rm(list=ls())
 Sys.setenv(lang = "ENG")
 Sys.setlocale("LC_ALL", "English") #not setting this to English will break as.Date()
 
+# set wd to where the source file is
+# make sure you have the datafiles in a /data/ folder
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 # 2 Data import ----
 #===================#
 
@@ -72,6 +76,9 @@ notices.df$document_type <- 'notice'
 # merge all dataframes together
 documents <- rbind(executive.orders.df, presidential.orders.df, memorandums.df, proclamations.df, notices.df)
 documents <- documents[order(publication_date),]
+
+# count how many NAs we have
+sum(is.na(documents$text))
 
 # remove unnecessary values
 rm(executive.orders, memorandums, notices, presidential.orders, proclamations)
@@ -266,9 +273,9 @@ documents<-cbind(documents,pred_nm)
 
 # Pr?sident
 
-# Topic analysis für ein Land mit vielen EO
+# Topic analysis f?r ein Land mit vielen EO
 
-# Was sind FP preference von US Präsidenten?
+# Was sind FP preference von US Pr?sidenten?
 
 #Kontrollvariablen und UV
 #Tenure
