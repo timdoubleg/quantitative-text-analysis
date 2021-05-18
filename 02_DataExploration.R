@@ -117,31 +117,23 @@ sum(is.na(df1$EO_nr) | is.na(df1$date)) #25 indicates that the documents missing
 
 df1 <- filter(df1, !is.na(date)) #keeping only data with no missing values
 
+
+#adding presidents by checking the EO number. reference: https://www.federalregister.gov/presidential-documents/executive-orders
 df1 <- df1 %>% 
-  mutate(
-  if(between(EO_nr, 12984, 13197)) {
-    president = "Clinton"
-  }
-  if(between(EO_nr, 13198, 13488)) {
-    president = "W. Bush"
-  }
-  if(between(EO_nr, 13489, 13764)) {
-    president = "Obama"
-  }
-  if(between(EO_nr, 13765, 13984)) {
-    president = "Trump"
-  }
-  if(EO_nr > 13984) {
-    president = "Biden"
-  }
-)
+  mutate(president = case_when(
+      EO_nr >= 12945 & EO_nr <= 13197 ~ "Clinton",
+      EO_nr >= 13198 & EO_nr <= 13488 ~ "W. Bush",
+      EO_nr >= 13489 & EO_nr <= 13764 ~ "Obama",
+      EO_nr >= 13765 & EO_nr <= 13984 ~ "Trump",
+      EO_nr >= 13985 ~ "Biden"))
+
 
 
 # 4 Data exploration ----
 #===================#
 
 # The following code creates the already cleaned main corpus for our analysis.
-corp_main <- corpus(df1)
+corp_main <- corpus(documents)
 
 
 corp_main <- tokens(corp_main, 
@@ -153,7 +145,7 @@ corp_main <- tokens(corp_main,
 # By adding the number of tokens to our dataframe df1, we get a fealing of the length of each EO.
 
 number_corp_main<-ntoken(corp_main)
-df1<-cbind(df1,number_corp_main)
+documents<-cbind(documents,number_corp_main)
 
 # For our analysis, we need to know the country, each EO is addressing.
 # Given our large amount of data, going manually through every document
@@ -167,7 +159,7 @@ df1<-cbind(df1,number_corp_main)
 # For the geographical classification, dates do not hold much value. As such we will define the following custom stopwords.
 # Since there are many USA specific tokens, due to the origin of EOs being in the USA, some USA specific stopwords will also be removed to avoid an overrepresentation of the USA.
 
-corp1 <- corpus(df1)
+corp1 <- corpus(documents)
 
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
@@ -206,7 +198,7 @@ dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z0-9]+",
 # Next, we will train the Newsmap model in a semi-supervised document classification approach, using the two document-feature matrices.
 tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label)
 
-coef(tmod_nm,n=15)[c("US","CN","IN")] 
+coef(tmod_nm,n=15)[c("US","CN","IQ")] 
 
 #The code above extracts the model coefficients and thus gives us the strength with which the model associates certain words with a country based on our data.
 
@@ -220,7 +212,7 @@ prediction_country
 
 
 # The following code will join df1 with our predicted country labels.
-df1<-cbind(df1,pred_nm)
+documents<-cbind(documents,pred_nm)
 
 
 # Junk code (will delete this at some point) ----
@@ -261,7 +253,7 @@ df1<-cbind(df1,pred_nm)
 #   >>> evtl. m?ssen Dictionaries verwendet werden bei L?ndern mit wenig Daten
 #   >>> unsupervised ML?
 
-# Relevanz von L?ndern ?ber Zeit 
+# Relevanz von L?ndern ?ber Zeit
 #   >>> evtl mit Textl?nge gewichten
 
 # Interaktive time series Visualisierung
@@ -270,7 +262,23 @@ df1<-cbind(df1,pred_nm)
 
 # Pr?sident
 
-# Topic analysis f?r ein Land mit vielen EO
+# Topic analysis für ein Land mit vielen EO
+
+# Was sind FP preference von US Präsidenten?
+
+#Kontrollvariablen und UV
+#Tenure
+#Majority size in congress
+#Reelection ambition
+#New president or reelected?
+#Election year?
+#Change in popularity?
+
+                     
+
+
+
+
 
 
 
