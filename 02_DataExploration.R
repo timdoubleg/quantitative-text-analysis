@@ -133,7 +133,7 @@ df1 <- df1 %>%
 #===================#
 
 # The following code creates the already cleaned main corpus for our analysis.
-corp_main <- corpus(df1)
+corp_main <- corpus(documents)
 
 
 corp_main <- tokens(corp_main, 
@@ -145,7 +145,7 @@ corp_main <- tokens(corp_main,
 # By adding the number of tokens to our dataframe df1, we get a fealing of the length of each EO.
 
 number_corp_main<-ntoken(corp_main)
-df1<-cbind(df1,number_corp_main)
+documents<-cbind(documents,number_corp_main)
 
 # For our analysis, we need to know the country, each EO is addressing.
 # Given our large amount of data, going manually through every document
@@ -159,7 +159,7 @@ df1<-cbind(df1,number_corp_main)
 # For the geographical classification, dates do not hold much value. As such we will define the following custom stopwords.
 # Since there are many USA specific tokens, due to the origin of EOs being in the USA, some USA specific stopwords will also be removed to avoid an overrepresentation of the USA.
 
-corp1 <- corpus(df1)
+corp1 <- corpus(documents)
 
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
@@ -198,7 +198,7 @@ dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z0-9]+",
 # Next, we will train the Newsmap model in a semi-supervised document classification approach, using the two document-feature matrices.
 tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label)
 
-coef(tmod_nm,n=15)[c("US","CN","IN")] 
+coef(tmod_nm,n=15)[c("US","CN","IQ")] 
 
 #The code above extracts the model coefficients and thus gives us the strength with which the model associates certain words with a country based on our data.
 
@@ -212,7 +212,7 @@ prediction_country
 
 
 # The following code will join df1 with our predicted country labels.
-df1<-cbind(df1,pred_nm)
+documents<-cbind(documents,pred_nm)
 
 
 # Junk code (will delete this at some point) ----
