@@ -103,24 +103,16 @@ sum(is.na(df1$EO_nr) | is.na(df1$date)) #25 indicates that the documents missing
 
 df1 <- filter(df1, !is.na(date)) #keeping only data with no missing values
 
+
+#adding presidents by checking the EO number. reference: https://www.federalregister.gov/presidential-documents/executive-orders
 df1 <- df1 %>% 
-  mutate(
-  if(between(EO_nr, 12984, 13197)) {
-    president = "Clinton"
-  }
-  if(between(EO_nr, 13198, 13488)) {
-    president = "W. Bush"
-  }
-  if(between(EO_nr, 13489, 13764)) {
-    president = "Obama"
-  }
-  if(between(EO_nr, 13765, 13984)) {
-    president = "Trump"
-  }
-  if(EO_nr > 13984) {
-    president = "Biden"
-  }
-)
+  mutate(president = case_when(
+      EO_nr >= 12945 & EO_nr <= 13197 ~ "Clinton",
+      EO_nr >= 13198 & EO_nr <= 13488 ~ "W. Bush",
+      EO_nr >= 13489 & EO_nr <= 13764 ~ "Obama",
+      EO_nr >= 13765 & EO_nr <= 13984 ~ "Trump",
+      EO_nr >= 13985 ~ "Biden"))
+
 
 
 # 4 Data exploration ----
@@ -247,7 +239,7 @@ df1<-cbind(df1,pred_nm)
 #   >>> evtl. m?ssen Dictionaries verwendet werden bei L?ndern mit wenig Daten
 #   >>> unsupervised ML?
 
-# Relevanz von L?ndern ?ber Zeit 
+# Relevanz von L?ndern ?ber Zeit
 #   >>> evtl mit Textl?nge gewichten
 
 # Interaktive time series Visualisierung
@@ -256,7 +248,23 @@ df1<-cbind(df1,pred_nm)
 
 # Pr?sident
 
-# Topic analysis f?r ein Land mit vielen EO
+# Topic analysis für ein Land mit vielen EO
+
+# Was sind FP preference von US Präsidenten?
+
+#Kontrollvariablen und UV
+#Tenure
+#Majority size in congress
+#Reelection ambition
+#New president or reelected?
+#Election year?
+#Change in popularity?
+
+                     
+
+
+
+
 
 
 
