@@ -17,6 +17,7 @@ library(quanteda)
 library(stringr)
 library(dplyr)
 library(newsmap)
+library(sentimentr)
 
 rm(list=ls())
 
@@ -111,34 +112,26 @@ sum(is.na(df1$EO_nr)) #there are 25 missing EO_nr values
 sum(is.na(df1$date)) #there are 25 missing date values
 sum(is.na(df1$EO_nr) | is.na(df1$date)) #25 indicates that the documents missing EO_nr are also the ones missing date values
 
-## Trying to deal with missing values ----
-df1 %>% filter(is.na(date)) %>% data.frame() %>%  select(doc_id) #displays a df that contains all the documents with missing values
+df1 <- filter(df1, !is.na(date)) #keeping only data with no missing values
 
-#manual inspection reveals that some EOs only contain "Order" but not "Executive Order <nr>"
-
-
-### Adapting the regex ----
-new_regex <- "Order\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}"
-
-df2 <- df1 %>% ## I don't understand why this code is not working! all the dates remain NA ----
-filter(is.na(date)) %>%
-  find_EO_dates(regex_pattern = new_regex)
-
-sum(is.na(df1$date)) # there are still 25 missing date values, meaning the code above failed
-
-
-df1 %>% ## meanwhile, picking a single document like this somehow works, the date is correctly extracted. I don't know why  ----
-filter(is.na(date)) %>%
-  filter(doc_id == "2016-29494.pdf") %>%
-  select(text) %>%
-  str_extract(new_regex) %>% 
-  str_extract("(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") %>% 
-  as.Date(format = "%B %d, %Y")
-
-# right_join(df1, df2, by = "text") can't join the two df together before this issue is resolved
-
-df1<- filter(df1,!is.na(date))
-
+df1 <- df1 %>% 
+  mutate(
+  if(between(EO_nr, 12984, 13197)) {
+    president = "Clinton"
+  }
+  if(between(EO_nr, 13198, 13488)) {
+    president = "W. Bush"
+  }
+  if(between(EO_nr, 13489, 13764)) {
+    president = "Obama"
+  }
+  if(between(EO_nr, 13765, 13984)) {
+    president = "Trump"
+  }
+  if(EO_nr > 13984) {
+    president = "Biden"
+  }
+)
 
 
 # 4 Data exploration ----
@@ -227,7 +220,37 @@ prediction_country
 df1<-cbind(df1,pred_nm)
 
 
-# Research Ideen ---
+# Junk code (will delete this at some point) ----
+
+
+## Trying to deal with missing values ----
+#df1 %>% filter(is.na(date)) %>% data.frame() %>%  select(doc_id) #displays a df that contains all the documents with missing values
+
+#manual inspection reveals that some EOs only contain "Order" but not "Executive Order <nr>"
+
+
+### Adapting the regex ----
+#new_regex <- "Order\\s{1}of\\s{1}(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}"
+
+#df2 <- df1 %>% ## I don't understand why this code is not working! all the dates remain NA ----
+#filter(is.na(date)) %>%
+# find_EO_dates(regex_pattern = new_regex)
+
+#sum(is.na(df1$date)) # there are still 25 missing date values, meaning the code above failed
+
+
+#df1 %>% ## meanwhile, picking a single document like this somehow works, the date is correctly extracted. I don't know why  ----
+# filter(is.na(date)) %>%
+#   filter(doc_id == "2016-29494.pdf") %>%
+#   select(text) %>%
+#   str_extract(new_regex) %>% 
+#   str_extract("(January|February|March|April|May|June|July|August|September|October|November|December)\\s{1}\\d{1,2},\\s{1}\\d{4}") %>% 
+#   as.Date(format = "%B %d, %Y")
+# right_join(df1, df2, by = "text") can't join the two df together before this issue is resolved
+
+
+
+# Research Ideen ----
 
 
 # Positiv-negagiv-Skala 
