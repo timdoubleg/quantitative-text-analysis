@@ -161,18 +161,27 @@ rm(
 # The following code creates the already cleaned main corpus for our analysis.
 corp_main <- corpus(documents)
 
-
-corp_main <- tokens(corp_main, 
+corp_main_tokens <- tokens(corp_main, 
                     remove_punct = TRUE,
                     remove_numbers = TRUE,
                     remove_symbols = TRUE) %>%
+  tokens_tolower() %>%
   tokens_remove(stopwords("english")) 
 
-# By adding the number of tokens to our dataframe documents, we get a fealing of the length of each EO.
-
-number_corp_main<-ntoken(corp_main)
+number_corp_main<-ntoken(corp_main_tokens) # By adding the number of tokens to our dataframe documents, we get a fealing of the length of each EO.
 documents<-cbind(documents,number_corp_main)
 
+collocations <- corp_main_tokens %>%
+  textstat_collocations(min_count = 250,
+                        size = 2) %>%
+  filter(count >250)
+
+corp_main_tokens <- tokens_compound(corp_main_tokens,
+                                 phrase(collocations$collocation))
+
+corp_main_dfm<-dfm(corp_main_tokens)
+
+# Using Newsmap 
 corp1 <- corpus(documents) # corpus for Newsmap
 
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
@@ -217,6 +226,8 @@ rm(
   dfmat_label,
   tokens_corp1,
   toks_label,
+  collocations,
+  corp_main_tokens,
   tmod_nm,
   day,
   month,
@@ -224,7 +235,8 @@ rm(
   number_corp_main,
   pred_nm,
   prediction_country,
-  USA
+  USA,
+  number_corp_main
 )
 
 
