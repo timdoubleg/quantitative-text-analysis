@@ -84,12 +84,14 @@ documents <- documents[order(publication_date),]
 # count how many NAs we have
 sum(is.na(documents$text))
 
+# remove texts with NAs
+documents <- documents[!is.na(documents$text), ]
+
 # remove unnecessary values
 rm(executive.orders, memorandums, notices, presidential.orders, proclamations)
 
 # check how many unique documents we have
 length(unique(documents$document_number))
-
 
 
 #The filename correspond with the federal register doc id. They do not provide additional information, thus no further docvars are specified.
