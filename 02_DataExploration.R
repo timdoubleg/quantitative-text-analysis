@@ -137,12 +137,12 @@ list_of_documents_by_biden <- read.csv("https://www.federalregister.gov/document
 #adding a new var "president" to the "documents" object by comparing "document_number"
 documents <- documents %>% 
   mutate(president = as.factor(case_when(
-      (EO_nr >= 12945 & EO_nr <= 13197) | document_number %in% list_of_documents_by_clinton$document_number ~ "Clinton",
-      (EO_nr >= 13198 & EO_nr <= 13488) | document_number %in% list_of_documents_by_w.bush$document_number ~ "W. Bush",
-      (EO_nr >= 13489 & EO_nr <= 13764) | document_number %in% list_of_documents_by_obama$document_number ~ "Obama",
-      (EO_nr >= 13765 & EO_nr <= 13984) | document_number %in% list_of_documents_by_trump$document_number ~ "Trump",
-      (EO_nr >= 13985) | document_number %in% list_of_documents_by_biden$document_number ~ "Biden",
-      )))
+    (EO_nr >= 12945 & EO_nr <= 13197) | document_number %in% list_of_documents_by_clinton$document_number ~ "Clinton",
+    (EO_nr >= 13198 & EO_nr <= 13488) | document_number %in% list_of_documents_by_w.bush$document_number ~ "W. Bush",
+    (EO_nr >= 13489 & EO_nr <= 13764) | document_number %in% list_of_documents_by_obama$document_number ~ "Obama",
+    (EO_nr >= 13765 & EO_nr <= 13984) | document_number %in% list_of_documents_by_trump$document_number ~ "Trump",
+    (EO_nr >= 13985) | document_number %in% list_of_documents_by_biden$document_number ~ "Biden",
+  )))
 
 #remove lists to unclutter the environment
 rm(
@@ -204,12 +204,28 @@ tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label) # Training the 
 coef(tmod_nm,n=15)[c("US","CN","IQ")] # Extraction of model coefficients
 
 pred_nm <- predict(tmod_nm) # Prediction of country labels on our documents
-head(pred_nm,1000)
 
 prediction_country<-table(pred_nm) # Frequency of countries in EO
 prediction_country
 
 documents<-cbind(documents,pred_nm) # joining documents with predicted country labels
+
+#remove Data and values to unclutter the environment
+rm(
+  dfmat_feat,
+  dfmat_feat_select,
+  dfmat_label,
+  tokens_corp1,
+  toks_label,
+  tmod_nm,
+  day,
+  month,
+  corp1,
+  number_corp_main,
+  pred_nm,
+  prediction_country,
+  USA
+)
 
 
 # Junk code (will delete this at some point) ----
