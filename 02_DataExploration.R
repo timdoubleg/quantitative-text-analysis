@@ -14,6 +14,9 @@
 library(here)
 library(readtext)
 library(quanteda)
+library(quanteda.dictionaries)
+library(quanteda.corpora)
+library(quanteda.tidy)
 library(stringr)
 library(dplyr)
 library(newsmap)
@@ -220,24 +223,21 @@ prediction_country
 documents<-cbind(documents,pred_nm) # joining documents with predicted country labels
 
 #remove Data and values to unclutter the environment
-rm(
-  dfmat_feat,
-  dfmat_feat_select,
-  dfmat_label,
-  tokens_corp1,
-  toks_label,
-  collocations,
-  corp_main_tokens,
-  tmod_nm,
-  day,
-  month,
-  corp1,
-  number_corp_main,
-  pred_nm,
-  prediction_country,
-  USA,
-  number_corp_main
-)
+rm(dfmat_feat,dfmat_feat_select,dfmat_label,tokens_corp1,toks_label,collocations,corp_main_tokens,
+   corp_main,tmod_nm,day,month,corp1,number_corp_main,pred_nm,prediction_country,USA,number_corp_main)
+
+
+# Sentiment Analysis with simple AFINN (maybe too simple?)
+
+corp_main_dfm_AFINN <- corp_main_dfm %>%
+  dfm(.,
+      dictionary = data_dictionary_AFINN)
+
+emotion <- convert(corp_main_dfm_AFINN, to = "data.frame")
+net_emotion <- emotion$positive-emotion$negative
+documents <- cbind(documents,net_emotion)
+
+rm(emotion,net_emotion,corp_main_dfm_AFINN)
 
 
 # Junk code (will delete this at some point) ----
