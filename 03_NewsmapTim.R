@@ -141,7 +141,7 @@ plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country)
   facet_grid(rows = vars(reorder(country, -n)), scales = 'free') +
   labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
        y = '',
-       x = 'number of EOs',
+       x = 'Years',
        subtitle = paste0('n = ', nrow(eo.top10))
   ) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
@@ -155,7 +155,7 @@ plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country)
   facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
   labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
        y = '',
-       x = 'number of EOs',
+       x = 'Years',
        subtitle = paste0('n = ', nrow(eo.top10))
   ) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
