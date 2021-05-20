@@ -56,6 +56,9 @@ data <- subset(data, select = -c(URL, H1, H2, H3))
 # show new ranges
 summary(data)
 
+# rename column to text
+data <- data %>% rename(text = body)
+
 # Save dataframe ------------------
 fwrite(data, './data/executive_orders_cleaned.csv')
 
