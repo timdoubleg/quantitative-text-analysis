@@ -22,6 +22,7 @@ library(data.table)
 library(tidyr)
 library(maps)
 library(countrycode)
+library(ggplot2)
 
 # Setup----
 #===================#
@@ -40,7 +41,7 @@ data <- fread('./data/executive_orders_cleaned.csv')
 eo.corpus <- corpus(data, 
                     docid_field =  "eo_number", 
                     text_field = 'text')
-head(summary(corp_main))
+head(summary(eo.corpus))
 
 # set some dictionaries for later
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
@@ -108,7 +109,7 @@ top10 <- top10[order(-top10$frequency),]
 rownames(top10) <- NULL
 
 # add country to dataframe
-data$iso <- prednm
+data$iso <- pred_nm
 data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
 
 # get eos only for top 10 countries
