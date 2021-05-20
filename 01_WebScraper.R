@@ -27,6 +27,7 @@ frontier = {}
 # else set it to the maximum amount of pages: 609
 n = 609
 
+
 for (i in 1:n){
   # DEQUEUEING AND FETCHING OF WEBPAGE ----- # dequeue URL from frontier
   current_URL <- paste0('https://www.presidency.ucsb.edu/documents/app-categories/written-presidential-orders/presidential/executive-orders?page=', i)
@@ -69,6 +70,8 @@ colnames(df) <- "urls"
 filtered.urls <- df %>%filter(str_detect(urls, 'https://www.presidency.ucsb.edu/documents/executive-order'))
 filtered.urls <- data.frame(unique((filtered.urls)))
 
+# save the urls just in case something goes wrong after this
+fwrite(filtered.urls, './data/filtered_urls.csv')
 
 # set up lists for extraction
 url.list = {}
@@ -77,7 +80,9 @@ h1.list = {}
 h2.list = {}
 h3.list = {}
 date.list = {}
+fail.list = {}
 
+# failure at 1716
 
 # web scrapting of texts 
 for (i in 1:nrow(filtered.urls)){
@@ -110,6 +115,7 @@ for (i in 1:nrow(filtered.urls)){
   },
   error = function(cond) {
     message(paste("URL does not seem to exist:", url))
+    fail.list[[i]] <- url
     message("Here's the original error message:")
     message(cond)
     # Choose a return value in case of error

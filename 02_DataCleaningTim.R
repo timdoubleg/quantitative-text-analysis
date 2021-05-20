@@ -9,7 +9,7 @@ library(dplyr)
 # make sure you have the datafiles in a /data/ folder
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-rm(list=ls())
+#rm(list=ls())
 
 data <- fread('./data/executive_orders.csv')
 
@@ -19,6 +19,7 @@ head(data$H2)
 head(data$H3)
 head(data$date)
 
+data.short <- data[, 1:4]
 
 ### FEATURE ENGINEERING --------------------------
 
@@ -28,7 +29,8 @@ unique(data$document_type)
 
 # get executive order
 data$eo_number <- strtoi(substr(data$H1, start = 16, stop = 21))
-data$eo_number 
+length(unique(data$eo_number))
+duplicates <- data[duplicated(data$eo_number), -5] # we have multiple duplicates but 
 
 # extract title
 data$title <- str_sub(data$H1, start = 23)
@@ -44,3 +46,11 @@ data$date <- str_sub(data$date, start = 6, end = -3)
 data$date <- as.Date(data$date, format = "%B %d, %Y")
 head(data$date)
 
+# filter all dates after 1950
+data <- data[data$date > '1950-01-01',]
+
+# drop duplicate EOs
+data <- data[!duplicated(data$eo_number),]
+
+# drop not needed columns 
+data <- subset(data, select = -c(URL, H1, H2, H3))
