@@ -112,7 +112,7 @@ rownames(top10) <- NULL
 data$iso <- pred_nm
 data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
 
-# get eos only for top 10 countries
+# get EOs only for top 10 countries
 target <- top10$country
 eo.top10 <- filter(data, country %in% target)
 nrow(eo.top10)/nrow(data) # account for the majority
@@ -128,4 +128,38 @@ plot.top10 <- ggplot(top10, aes(x = frequency, y = reorder(country, frequency)))
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black"))
 plot.top10
 
+
+# plot counts over times
+eo.top10$year <- year(eo.top10$date)
+
+# count EOs per year and country
+country.long <- eo.top10 %>% count(year, country)
+
+# plot top 10 over time
+plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country))) + 
+  geom_line() +
+  facet_grid(rows = vars(reorder(country, -n)), scales = 'free') +
+  labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
+       y = '',
+       x = 'number of EOs',
+       subtitle = paste0('n = ', nrow(eo.top10))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw() + 
+  theme(legend.position = "none") 
+plot.top10.time
+
+# with fixed
+plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country))) + 
+  geom_line() +
+  facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
+  labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
+       y = '',
+       x = 'number of EOs',
+       subtitle = paste0('n = ', nrow(eo.top10))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw() + 
+  theme(legend.position = "none") 
+plot.top10.time
 
