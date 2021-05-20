@@ -19,18 +19,16 @@ head(data$H2)
 head(data$H3)
 head(data$date)
 
-data.short <- data[, 1:4]
 
-### FEATURE ENGINEERING --------------------------
+### FEATURE ENGINEERING & CLEANING--------------------------
 
 # get document type
 data$document_type <- substr(data$H1, start = 1, stop = 15)
 unique(data$document_type)
 
-# get executive order
+# get executive order number
 data$eo_number <- strtoi(substr(data$H1, start = 16, stop = 21))
 length(unique(data$eo_number))
-duplicates <- data[duplicated(data$eo_number), -5] # we have multiple duplicates but 
 
 # extract title
 data$title <- str_sub(data$H1, start = 23)
@@ -54,3 +52,6 @@ data <- data[!duplicated(data$eo_number),]
 
 # drop not needed columns 
 data <- subset(data, select = -c(URL, H1, H2, H3))
+
+# show new ranges
+summary(data)
