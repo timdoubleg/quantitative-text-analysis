@@ -22,11 +22,11 @@ head(data$date)
 
 ### FEATURE ENGINEERING & CLEANING--------------------------
 
-# get document type
+# extract document type
 data$document_type <- substr(data$H1, start = 1, stop = 15)
 unique(data$document_type)
 
-# get executive order number
+# extract executive order number
 data$eo_number <- strtoi(substr(data$H1, start = 16, stop = 21))
 length(unique(data$eo_number))
 
@@ -35,7 +35,7 @@ data$title <- str_sub(data$H1, start = 23)
 head(data$title)
 tail(data$title)
 
-# get presidents
+# extract presidents
 data$president <- sub(",.*", "", data$H3)
 unique(data$president)
 
@@ -55,3 +55,8 @@ data <- subset(data, select = -c(URL, H1, H2, H3))
 
 # show new ranges
 summary(data)
+
+# Save dataframe ------------------
+fwrite(data, './data/executive:orders_cleaned.csv')
+
+
