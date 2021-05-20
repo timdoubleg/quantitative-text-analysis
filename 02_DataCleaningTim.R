@@ -57,6 +57,6 @@ data <- subset(data, select = -c(URL, H1, H2, H3))
 summary(data)
 
 # Save dataframe ------------------
-fwrite(data, './data/executive:orders_cleaned.csv')
+fwrite(data, './data/executive_orders_cleaned.csv')
 
 
