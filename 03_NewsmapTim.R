@@ -26,7 +26,7 @@ library(ggplot2)
 
 # Setup----
 #===================#
-#rm(list=ls())
+rm(list=ls())
 
 # set wd to where the source file is
 # make sure you have the datafiles in a /data/ folder
@@ -96,7 +96,7 @@ plot.map <- ggplot(dat_country, aes(map_id = id)) +
   scale_fill_continuous(name = "Frequency") +
   theme_void() +
   coord_fixed() +
-  scale_fill_gradient(low="#56B1F7", high="#ff0000") + 
+  scale_fill_gradientn(colors=c("#56B1F7","green","yellow","orange","#ff0000"), values = scales::rescale(c(5, 25, 100, 200, 400))) +
   labs(title = 'Frequency of countries (1950 -2021)', 
        subtitle = paste0('n = ', nrow(data)))
 plot.map
