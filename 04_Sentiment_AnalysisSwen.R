@@ -83,8 +83,6 @@ presidents_df
 
 
 # Taking valence shifters into consideration
-library(RSentiment)
-
 sentiment_df<-sentiment(text.var = data$text,
                         polarity_dt = lexicon::hash_sentiment_jockers_rinker,
                         n.before = 5,
