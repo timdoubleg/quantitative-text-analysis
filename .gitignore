@@ -2,7 +2,7 @@
 /data/
 
 # exclude history and workspace
-./RData
-./Rhistory
-
+.RData
+.Rhistory
+.DS_store
 
