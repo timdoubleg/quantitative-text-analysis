@@ -89,6 +89,7 @@ sentiment_df<-sentiment_by(text.var = data$text,
                         n.after = 2)
 
 glimpse(sentiment_df)
+summary(sentiment_df$ave_sentiment)
 
 data <- cbind(data,sentiment_df$ave_sentiment)
 data <-data %>% rename(sentiment_valence = V2)
