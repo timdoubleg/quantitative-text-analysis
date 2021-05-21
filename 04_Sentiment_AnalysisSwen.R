@@ -83,15 +83,22 @@ presidents_df
 
 
 # Taking valence shifters into consideration
-sentiment_df<-sentiment_by(text.var = data$text,
+library(RSentiment)
+
+sentiment_df<-sentiment(text.var = data$text,
                         polarity_dt = lexicon::hash_sentiment_jockers_rinker,
                         n.before = 5,
                         n.after = 2)
 
+<<<<<<< HEAD
 glimpse(sentiment_df)
 summary(sentiment_df$ave_sentiment)
 
 data <- cbind(data,sentiment_df$ave_sentiment)
+=======
+sentiment_mean<-aggregate(sentiment_df[,4],list(sentiment_df$element_id),mean)
+data <- cbind(data,sentiment_mean$sentiment)
+>>>>>>> 3595484ae022e13e536db9c44ff7bdb0a8bc577b
 data <-data %>% rename(sentiment_valence = V2)
 
 fig_3 <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_valence, color = sentiment_valence)) + geom_point() +
@@ -143,10 +150,17 @@ data <- cbind(data,net_emotion_AFINN)
 
 
 
+format(as.Date(df1$Date, format="%d/%m/%Y"),"%Y")
 
+test_data <- data %>% group_by(country) %>% summarise(n = n(), min_rank(n)) %>% filter(min_rank(n) < 10)
 
+ggplot(data, aes(x=date, y=sentiment_EO)) + 
+  geom_line() +
+  facet_grid(rows = vars(country))
+  
+  facet_grid(rows = vars(reorder(country, -sentiment_EO)), scales = 'fixed')
 
-plot.top10.sentiment <- ggplot(country.long, aes(x=year, y=sentiment_EO, color = factor(country))) + 
+plot.top10.sentiment <- ggplot(data, aes(x=year, y=sentiment_EO, color = factor(country))) + 
   geom_line() +
   facet_grid(rows = vars(reorder(country, -sentiment_EO)), scales = 'fixed') +
   labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
