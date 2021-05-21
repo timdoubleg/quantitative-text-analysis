@@ -83,13 +83,14 @@ presidents_df
 
 
 # Taking valence shifters into consideration
-sentiment_df<-sentiment(text.var = data$text,
+sentiment_df<-sentiment_by(text.var = data$text,
                         polarity_dt = lexicon::hash_sentiment_jockers_rinker,
                         n.before = 5,
                         n.after = 2)
 
-sentiment_mean<-aggregate(sentiment_df[,4],list(sentiment_df$element_id),mean)
-data <- cbind(data,sentiment_mean$sentiment)
+glimpse(sentiment_df)
+
+data <- cbind(data,sentiment_df$ave_sentiment)
 data <-data %>% rename(sentiment_valence = V2)
 
 fig_3 <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_valence, color = sentiment_valence)) + geom_point() +
