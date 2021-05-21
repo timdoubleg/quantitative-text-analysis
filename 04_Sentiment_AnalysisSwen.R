@@ -140,3 +140,21 @@ sentiment_corpus_dfm_AFINN <- sentiment_corpus_dfm %>%
 emotion <- convert(sentiment_corpus_dfm_AFINN, to = "data.frame")
 net_emotion_AFINN <- emotion$positive-emotion$negative
 data <- cbind(data,net_emotion_AFINN)
+
+
+
+
+
+
+plot.top10.sentiment <- ggplot(country.long, aes(x=year, y=sentiment_EO, color = factor(country))) + 
+  geom_line() +
+  facet_grid(rows = vars(reorder(country, -sentiment_EO)), scales = 'fixed') +
+  labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
+       y = 'Sentiment',
+       x = 'Years',
+       subtitle = paste0('sentiment_EO = ', nrow(eo.top10))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw() + 
+  theme(legend.position = "none") 
+plot.top10.sentiment
