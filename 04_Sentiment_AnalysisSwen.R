@@ -34,7 +34,10 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 data <- fread('./data/executive_orders_cleaned.csv')
 
-# Sentiment Analysis
+
+
+
+# Sentiment Analysis with Syuzhet
 
 library(syuzhet)
 library(tidyverse)
@@ -62,11 +65,20 @@ fig_Obama <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=se
 fig_Obama
 
 
+
+
+
+
+
 # frequency of EO by president
 presidents <- table(data$president)
 presidents_df <- as.data.frame(presidents)
 names(presidents_df)[1]="president"
 presidents_df
+
+
+
+
 
 
 
@@ -82,11 +94,13 @@ sentiment_mean<-aggregate(sentiment_df[,4],list(sentiment_df$element_id),mean)
 data <- cbind(data,sentiment_mean$sentiment)
 data <-data %>% rename(sentiment_valence = V2)
 
-
-# find out why it doesn't work
 fig_3 <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_valence, color = sentiment_valence)) + geom_point() +
   geom_smooth(aes(x=date,y=sentiment_valence),method=lm, se=FALSE)
 fig_3
+
+
+
+
 
 
 # # Sentiment Analysis with simple AFINN according to method with cleaned corpus.
