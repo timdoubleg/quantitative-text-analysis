@@ -49,6 +49,9 @@ read_pdfs <- function (folder_dir){
            verbosity = 3) 
 }
 
+test <- read_pdfs("/executive_orders/E9-30020.pdf")
+glimpse(test)
+
 # read in all data
 executive.orders <- read_pdfs('executive_orders/')
 presidential.orders <- read_pdfs('presidential_orders/')

@@ -26,7 +26,7 @@ library(ggplot2)
 
 # Setup----
 #===================#
-#rm(list=ls())
+rm(list=ls())
 
 # set wd to where the source file is
 # make sure you have the datafiles in a /data/ folder
@@ -34,7 +34,23 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 data <- fread('./data/executive_orders_cleaned.csv')
 
-# Newsmap----
+# EO analysis----
+#===================#
+head(data) 
+data$year <- year(data$date)
+president.long <- as.data.frame(data %>% count(year, president,))
+head(president.long)
+plot.eo.president <- ggplot(president.long, aes(year, n, fill = (president))) +
+  geom_bar(stat = 'identity') + 
+  theme_bw() + 
+  labs(title = 'EOs per president (1950 -2021)', 
+       y = 'EO count',
+       x = 'Years',
+       subtitle = paste0('n = ', nrow(data)))
+
+plot.eo.president
+
+# Geographies----
 #===================#
 
 # make a corpus
@@ -86,6 +102,7 @@ count
 # plot the newsmap
 dat_country <- as.data.frame(count, stringsAsFactors = FALSE)
 dat_country <- dat_country[order(-dat_country$Freq),]
+dat_country$country <- countrycode(dat_country$pred_nm, origin = 'iso2c', destination = 'country.name')
 colnames(dat_country) <- c("id", "frequency")
 world_map <- map_data(map = "world")
 world_map$region <- iso.alpha(world_map$region) # convert country name to ISO code
@@ -96,11 +113,15 @@ plot.map <- ggplot(dat_country, aes(map_id = id)) +
   scale_fill_continuous(name = "Frequency") +
   theme_void() +
   coord_fixed() +
-  scale_fill_gradient(low="#56B1F7", high="#ff0000") + 
+  scale_fill_gradientn(colors=c("#56B1F7","green","yellow","orange","#ff0000"), values = scales::rescale(c(5, 25, 100, 200, 400))) +
   labs(title = 'Frequency of countries (1950 -2021)', 
        subtitle = paste0('n = ', nrow(data)))
 plot.map
 
+# check for counts of EU
+target <- c('Germany', 'France', 'Italy', 'United Kingdom', 'Belgium', 'Poland', 'Sweden')
+EU <- filter(dat_country, country %in% target)
+sum(EU$Freq)
 
 # check Top 10 countries and convert ISO
 top10 <- dat_country[1:10, ]
@@ -163,3 +184,6 @@ plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country)
   theme(legend.position = "none") 
 plot.top10.time
 
+
+### Save new dataframe ###
+fwrite(data, './data/executive_orders_withcountry.csv')

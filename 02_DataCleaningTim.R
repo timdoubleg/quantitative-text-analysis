@@ -10,7 +10,6 @@ library(dplyr)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 #rm(list=ls())
-
 data <- fread('./data/executive_orders.csv')
 
 # inspect
