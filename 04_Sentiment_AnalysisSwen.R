@@ -26,25 +26,23 @@ library(ggplot2)
 
 # Setup----
 #===================#
-#rm(list=ls())
+rm(list=ls())
 
 # set wd to where the source file is
 # make sure you have the datafiles in a /data/ folder
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-data <- fread('./data/executive_orders_cleaned.csv')
-
-
+data <- fread('./data/executive_orders_withcountry.csv')
 
 
 # Sentiment Analysis with Syuzhet
+#===================#
 
 library(syuzhet)
 library(tidyverse)
 library(lubridate)
 library(plotly)
 library(tibble)
-library(dplyr)
 
 # The code calculates the sentiment in each EO
 # method can easily be changed to afinn, bing or nrc. When using nrc, also add: lang="english"
@@ -65,52 +63,31 @@ fig_Obama <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=se
 fig_Obama
 
 
+# Taking valence shifters into consideration with sentimentr
+#===================#
 
-
-
-
-
-# frequency of EO by president
-presidents <- table(data$president)
-presidents_df <- as.data.frame(presidents)
-names(presidents_df)[1]="president"
-presidents_df
-
-
-
-
-
-
-
-# Taking valence shifters into consideration
-library(RSentiment)
-
-sentiment_df<-sentiment(text.var = data$text,
+# taking average_weighted_mixed_sentiment upweights negative to make up for polite social convention
+sentiment_df<-sentiment_by(text.var = data$text,
                         polarity_dt = lexicon::hash_sentiment_jockers_rinker,
+                        averaging.function=sentimentr::average_weighted_mixed_sentiment,
                         n.before = 5,
                         n.after = 2)
 
-<<<<<<< HEAD
 glimpse(sentiment_df)
 summary(sentiment_df$ave_sentiment)
 
 data <- cbind(data,sentiment_df$ave_sentiment)
-=======
-sentiment_mean<-aggregate(sentiment_df[,4],list(sentiment_df$element_id),mean)
-data <- cbind(data,sentiment_mean$sentiment)
->>>>>>> 3595484ae022e13e536db9c44ff7bdb0a8bc577b
 data <-data %>% rename(sentiment_valence = V2)
 
 fig_3 <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_valence, color = sentiment_valence)) + geom_point() +
   geom_smooth(aes(x=date,y=sentiment_valence),method=lm, se=FALSE)
 fig_3
 
+rm(sentiment_df)
 
-
-
-
-
-# # Sentiment Analysis with simple AFINN according to method with cleaned corpus.
+# Sentiment Analysis with simple AFINN according to method with cleaned corpus.
+# Allows for stopwords removal and better cleaning
+#===================#
 
 library(quanteda.textmodels)
 library(quanteda.textplots)
@@ -148,9 +125,10 @@ emotion <- convert(sentiment_corpus_dfm_AFINN, to = "data.frame")
 net_emotion_AFINN <- emotion$positive-emotion$negative
 data <- cbind(data,net_emotion_AFINN)
 
+rm(sentiment_corpus_dfm, sentiment_corpus_dfm_AFINN, sentiment_corpus_tokens, 
+   net_emotion_AFINN, sentiment_corpus, emotion, collocations)
 
-
-format(as.Date(df1$Date, format="%d/%m/%Y"),"%Y")
+format(as.Date(data$date, format="%d/%m/%Y"),"%Y")
 
 test_data <- data %>% group_by(country) %>% summarise(n = n(), min_rank(n)) %>% filter(min_rank(n) < 10)
 
@@ -159,16 +137,3 @@ ggplot(data, aes(x=date, y=sentiment_EO)) +
   facet_grid(rows = vars(country))
   
   facet_grid(rows = vars(reorder(country, -sentiment_EO)), scales = 'fixed')
-
-plot.top10.sentiment <- ggplot(data, aes(x=year, y=sentiment_EO, color = factor(country))) + 
-  geom_line() +
-  facet_grid(rows = vars(reorder(country, -sentiment_EO)), scales = 'fixed') +
-  labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
-       y = 'Sentiment',
-       x = 'Years',
-       subtitle = paste0('sentiment_EO = ', nrow(eo.top10))
-  ) +
-  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  theme_bw() + 
-  theme(legend.position = "none") 
-plot.top10.sentiment
