@@ -66,10 +66,8 @@ fig_Obama
 # Taking valence shifters into consideration with sentimentr
 #===================#
 
-# taking average_weighted_mixed_sentiment upweights negative to make up for polite social convention
 sentiment_df<-sentiment_by(text.var = data$text,
                         polarity_dt = lexicon::hash_sentiment_jockers_rinker,
-                        averaging.function=sentimentr::average_weighted_mixed_sentiment,
                         n.before = 5,
                         n.after = 2)
 
