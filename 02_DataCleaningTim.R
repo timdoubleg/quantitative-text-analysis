@@ -5,7 +5,8 @@ library(tidyverse)
 library(dplyr)
 
 
-# set wd to where the source file is
+# set wd to where the sour% 
+ce file is
 # make sure you have the datafiles in a /data/ folder
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 

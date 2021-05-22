@@ -24,6 +24,12 @@ library(maps)
 library(countrycode)
 library(ggplot2)
 
+library(syuzhet)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(tibble)
+
 # Setup----
 #===================#
 rm(list=ls())
@@ -33,23 +39,6 @@ rm(list=ls())
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 data <- fread('./data/executive_orders_withcountry.csv')
-
-
-# Sentiment Analysis with Syuzhet ----
-#===================#
-
-library(syuzhet)
-library(tidyverse)
-library(lubridate)
-library(plotly)
-library(tibble)
-
-# The code calculates the sentiment in each EO
-# method can easily be changed to afinn, bing or nrc. When using nrc, also add: lang="english"
-
-data[,"sentiment_syuzhet"]<-NA
-data$sentiment_syuzhet <- get_sentiment(data$text)
-
 
 
 # Taking valence shifters into consideration with sentimentr ----
@@ -66,7 +55,11 @@ summary(sentiment_df$ave_sentiment)
 data <- cbind(data,sentiment_df$ave_sentiment)
 data <-data %>% rename(sentiment_valence = V2)
 
+plot.sentiment_by(sentiment_df)
+
 rm(sentiment_df)
+
+
 
 # Sentiment Analysis with simple AFINN according to method with cleaned corpus. ----
 # Allows for stopwords removal and better cleaning and considers collocations
@@ -78,11 +71,14 @@ library(quanteda.dictionaries)
 library(quanteda.corpora)
 library(quanteda.tidy)
 
+#corpus creation
 sentiment_corpus <- corpus(data, 
                     docid_field =  "eo_number", 
                     text_field = 'text')
-head(summary(sentiment_corpus))
 
+glimpse(head(summary(sentiment_corpus)))
+
+#tokenization
 sentiment_corpus_tokens <- tokens(sentiment_corpus, 
                            remove_punct = TRUE,
                            remove_numbers = TRUE,
@@ -90,6 +86,7 @@ sentiment_corpus_tokens <- tokens(sentiment_corpus,
   tokens_tolower() %>%
   tokens_remove(stopwords("english")) 
 
+#accounting for collocations
 collocations <- sentiment_corpus_tokens %>%
   textstat_collocations(min_count = 250,
                         size = 2) %>%
@@ -98,57 +95,78 @@ collocations <- sentiment_corpus_tokens %>%
 sentiment_corpus_tokens <- tokens_compound(sentiment_corpus_tokens,
                                     phrase(collocations$collocation))
 
-sentiment_corpus_dfm<-dfm(sentiment_corpus_tokens)
+#creating dfm with cleaned tokens
+sentiment_corpus_dfm <- dfm(sentiment_corpus_tokens)
 
+#creating dfm with afinn dictionary
 sentiment_corpus_dfm_AFINN <- sentiment_corpus_dfm %>%
-  dfm(.,
-      dictionary = data_dictionary_AFINN)
+  dfm(., dictionary = data_dictionary_AFINN)
 
-emotion <- convert(sentiment_corpus_dfm_AFINN, to = "data.frame")
-net_emotion_AFINN <- emotion$positive-emotion$negative
-data <- cbind(data, net_emotion_AFINN)
+#creating df with doc_id, number of negative, positive, total number of tokens and total number of cleaned tokens
+sentiment_corpus_combined <- data.frame(c(
+   convert(sentiment_corpus_dfm_AFINN, to = "data.frame")),
+   data.frame(ntoken(sentiment_corpus)),
+   data.frame(ntoken(sentiment_corpus_dfm)),
+   row.names = FALSE)
+colnames(sentiment_corpus_combined)[4:5] <- c("n_tokens", "n_tokens_cleaned")
+
+#creating four afinn score indices
+#two of these mirror the formula used by sentimentr by taking the squareroot of n before dividing
+sentiment_scores_afinn <- transmute(sentiment_corpus_combined,
+  sent_afinn =              (positive-negative)/(n_tokens),
+  sent_afinn.sqrt =         (positive-negative)/sqrt(n_tokens),
+  sent_afinn_cleaned =      (positive-negative)/(n_tokens_cleaned),
+  sent_afinn_cleaned.sqrt = (positive-negative)/sqrt(n_tokens_cleaned),
+  )
+
+
+#checking ranges and extremes
+apply(sentiment_scores_afinn, 2, function(x){max(x)-min(x)})
+{function(x)max(x)-min(x)} (data$sentiment_valence)
+apply(sentiment_scores_afinn, 2, range)
+range(data$sentiment_valence)
+
+#none of the four afinn indices is comparable to sentimentr results
+#for the final analysis, the clean.sqrt index will be used
+#to provide somewhat better comparability, its range will be normalized, i.e. divided by the difference in range compared to sentimentr
+
+#merging with "data"
+data <- sentiment_scores_afinn %>%
+  transmute(
+   sent_afinn_weighted = sent_afinn_cleaned.sqrt /
+     {function(x,y) (max(x)-min(x))/(max(y)-min(y)) } (sentiment_scores_afinn$sent_afinn_cleaned.sqrt, data$sentiment_valence)
+  ) %>%
+  cbind(data)
+
 
 rm(sentiment_corpus_dfm, 
    sentiment_corpus_dfm_AFINN, 
    sentiment_corpus_tokens, 
    net_emotion_AFINN, 
    sentiment_corpus, 
+   sentiment_corpus_combined,
    emotion, 
    collocations)
 
 # Plots ----
 #===================#
 
-# plots with syuzhet
-fig_syuzhet <- ggplot(data %>% filter(date > "1950-04-11"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
+## defining plots ----
+fig_index_comparison1 <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(value)) +
+  geom_histogram(binwidth = .01) +
+  facet_grid(rows = vars(type_of_index)) +
+  xlim(-0.8,0.8) +
+  labs(title = "Comparing the density of sentiment values by afinn and sentimentr")
 
-fig_syuzhet_China <- ggplot(data %>% filter(country == "China"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
-
-fig_syuzhet_Obama <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
-
-fig_syuzhet
-fig_syuzhet_China
-fig_syuzhet_Obama
-
-# plots with valence shifters
-fig_valence_shifters <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_valence, color = sentiment_valence)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_valence),method=lm, se=FALSE)
-
-fig_valence_shifters
+fig_index_comparison2 <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=date,y=value)) +
+  geom_point(aes(color=president),alpha = 0.2) +
+  geom_smooth(aes(x=date,y=value),method=lm, se=FALSE) +
+  facet_grid(cols = vars(type_of_index)) +
+  ylim(-0.8,0.8) +
+  theme(legend.position = "top") +
+  labs(title = "Comparing sentiment values by afinn and sentimentr over time")
 
 
-
-
-# everything below this is WIP
-format(as.Date(data$date, format="%d/%m/%Y"),"%Y")
-
-test_data <- data %>% group_by(country) %>% summarise(n = n(), min_rank(n)) %>% filter(min_rank(n) < 10)
-
-ggplot(data, aes(x=date, y=sentiment_EO)) + 
-  geom_line() +
-  facet_grid(rows = vars(country))
-  
-  facet_grid(rows = vars(reorder(country, -sentiment_EO)), scales = 'fixed')
+## plot output----
+fig_index_comparison1
+fig_index_comparison2

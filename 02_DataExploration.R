@@ -49,7 +49,6 @@ read_pdfs <- function (folder_dir){
            verbosity = 3) 
 }
 
-
 # read in all data
 executive.orders <- read_pdfs('executive_orders/')
 presidential.orders <- read_pdfs('presidential_orders/')
@@ -147,7 +146,7 @@ documents <- documents %>%
     (EO_nr >= 13198 & EO_nr <= 13488) | document_number %in% list_of_documents_by_w.bush$document_number ~ "W. Bush",
     (EO_nr >= 13489 & EO_nr <= 13764) | document_number %in% list_of_documents_by_obama$document_number ~ "Obama",
     (EO_nr >= 13765 & EO_nr <= 13984) | document_number %in% list_of_documents_by_trump$document_number ~ "Trump",
-    (EO_nr >= 13985) | document_number %in% list_of_documents_by_biden$document_number ~ "Biden",
+    (EO_nr >= 13985) | document_number %in% list_of_documents_by_biden$document_number ~ "Biden"
   )))
 
 #remove lists to unclutter the environment
