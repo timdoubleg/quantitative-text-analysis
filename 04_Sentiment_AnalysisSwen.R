@@ -86,7 +86,7 @@ fig_3
 rm(sentiment_df)
 
 # Sentiment Analysis with simple AFINN according to method with cleaned corpus.
-# Allows for stopwords removal and better cleaning
+# Allows for stopwords removal and better cleaning and considers collocations
 #===================#
 
 library(quanteda.textmodels)
@@ -127,6 +127,8 @@ data <- cbind(data,net_emotion_AFINN)
 
 rm(sentiment_corpus_dfm, sentiment_corpus_dfm_AFINN, sentiment_corpus_tokens, 
    net_emotion_AFINN, sentiment_corpus, emotion, collocations)
+
+#===================#
 
 format(as.Date(data$date, format="%d/%m/%Y"),"%Y")
 
