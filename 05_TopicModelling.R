@@ -22,6 +22,7 @@ library(tidyr)
 library(ggplot2)
 library(topicmodels)
 library(tm)
+library(stm)
 
 rm(list=ls())
 
@@ -142,9 +143,27 @@ ggplot(topics.df, aes(x="", y = sum, fill = topic)) +
 
 
 
+# 3 Topic Modeling with Quanteda ----
+#===================#
 
+eo.china.dfm <- tokens(eo.china.corpus, 
+                 remove_punct =  TRUE, 
+                 remove_numbers = TRUE, 
+                 remove_separators = TRUE, 
+                 remove_symbols = TRUE, 
+                 remove_url = TRUE) %>% 
+  tokens_remove(c(stopwords("en"), words)) %>% 
+  dfm()
 
-# 3 Topic Modeling with LDA ----
+eo.china.dfm <- dfm_trim(eo.china.dfm, min_termfreq = 4, max_termfreq = 10)
+
+if (require("stm")) {
+  my_lda_fit20 <- stm(eo.china.dfm, K = 20, 
+                      verbose = TRUE)
+  plot(my_lda_fit20)
+}
+
+# 4 Topic Modeling with LDA ----
 #===================#
 
 lda <- LDA(data, k = 2, control = list(seed = 1234))
