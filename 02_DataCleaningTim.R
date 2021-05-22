@@ -52,6 +52,27 @@ data <- data[!duplicated(data$eo_number),]
 # drop not needed columns 
 data <- subset(data, select = -c(URL, H1, H2, H3))
 
+# add party affiliation by president
+data <- data %>%
+  mutate(
+    party = case_when(
+      str_detect(president, "Truman")         ~ "Democrat",
+      str_detect(president, "Eisenhower")     ~ "Republican",
+      str_detect(president, "Kennedy")        ~ "Demcrat",
+      str_detect(president, "Johnson")        ~ "Democrat",
+      str_detect(president, "Nixon")          ~ "Republican",
+      str_detect(president, "Ford")           ~ "Republican",
+      str_detect(president, "Carter")         ~ "Democrat",
+      str_detect(president, "Reagan")         ~ "Republican",
+      str_detect(president, "George Bush")    ~ "Republican",
+      str_detect(president, "Clinton")        ~ "Democrat",
+      str_detect(president, "George W. Bush") ~ "Republican",
+      str_detect(president, "Obama")          ~ "Democrat",
+      str_detect(president, "Trump")          ~ "Republican",
+      str_detect(president, "Biden")          ~ "Democrat",
+    )
+  )
+
 # show new ranges
 summary(data)
 
