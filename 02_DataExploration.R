@@ -49,8 +49,6 @@ read_pdfs <- function (folder_dir){
            verbosity = 3) 
 }
 
-test <- read_pdfs("/executive_orders/E9-30020.pdf")
-glimpse(test)
 
 # read in all data
 executive.orders <- read_pdfs('executive_orders/')
@@ -166,29 +164,6 @@ rm(
 # 4 Data exploration ----
 #===================#
 
-# The following code creates the already cleaned main corpus for our analysis.
-corp_main <- corpus(documents)
-
-corp_main_tokens <- tokens(corp_main, 
-                    remove_punct = TRUE,
-                    remove_numbers = TRUE,
-                    remove_symbols = TRUE) %>%
-  tokens_tolower() %>%
-  tokens_remove(stopwords("english")) 
-
-number_corp_main<-ntoken(corp_main_tokens) # By adding the number of tokens to our dataframe documents, we get a fealing of the length of each EO.
-documents<-cbind(documents,number_corp_main)
-
-collocations <- corp_main_tokens %>%
-  textstat_collocations(min_count = 250,
-                        size = 2) %>%
-  filter(count >250)
-
-corp_main_tokens <- tokens_compound(corp_main_tokens,
-                                 phrase(collocations$collocation))
-
-corp_main_dfm<-dfm(corp_main_tokens)
-
 # Using Newsmap 
 corp1 <- corpus(documents) # corpus for Newsmap
 
@@ -230,19 +205,6 @@ documents<-cbind(documents,pred_nm) # joining documents with predicted country l
 #remove Data and values to unclutter the environment
 rm(dfmat_feat,dfmat_feat_select,dfmat_label,tokens_corp1,toks_label,collocations,corp_main_tokens,
    corp_main,tmod_nm,day,month,corp1,number_corp_main,pred_nm,prediction_country,USA,number_corp_main)
-
-
-# Sentiment Analysis with simple AFINN (maybe too simple?)
-
-corp_main_dfm_AFINN <- corp_main_dfm %>%
-  dfm(.,
-      dictionary = data_dictionary_AFINN)
-
-emotion <- convert(corp_main_dfm_AFINN, to = "data.frame")
-net_emotion <- emotion$positive-emotion$negative
-documents <- cbind(documents,net_emotion)
-
-rm(emotion,net_emotion,corp_main_dfm_AFINN)
 
 
 # Junk code (will delete this at some point) ----
