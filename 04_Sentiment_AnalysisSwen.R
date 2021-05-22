@@ -47,19 +47,19 @@ library(tibble)
 # The code calculates the sentiment in each EO
 # method can easily be changed to afinn, bing or nrc. When using nrc, also add: lang="english"
 
-data[,"sentiment_EO"]<-NA
-data$sentiment_EO <- get_sentiment(data$text, method="afinn")
+data[,"sentiment_syuzhet"]<-NA
+data$sentiment_syuzhet <- get_sentiment(data$text)
 
-fig_sentiment <- ggplot(data %>% filter(date > "1950-04-11"),aes(x=date,y=sentiment_EO, color = sentiment_EO)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_EO),method=lm, se=FALSE)
+fig_sentiment <- ggplot(data %>% filter(date > "1950-04-11"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
+  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
 fig_sentiment
 
-fig_sentiment_China <- ggplot(data %>% filter(country == "China"),aes(x=date,y=sentiment_EO, color = sentiment_EO)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_EO),method=lm, se=FALSE)
+fig_sentiment_China <- ggplot(data %>% filter(country == "China"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
+  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
 fig_sentiment_China  
 
-fig_Obama <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_EO, color = sentiment_EO)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_EO),method=lm, se=FALSE)
+fig_Obama <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
+  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
 fig_Obama
 
 
