@@ -8,7 +8,7 @@
 # Tim Graf                        
 
 
-# 1 Loading libraries ----
+# Loading libraries ----
 #===================#
 
 library(here)
@@ -35,7 +35,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 data <- fread('./data/executive_orders_withcountry.csv')
 
 
-# Sentiment Analysis with Syuzhet
+# Sentiment Analysis with Syuzhet ----
 #===================#
 
 library(syuzhet)
@@ -50,20 +50,9 @@ library(tibble)
 data[,"sentiment_syuzhet"]<-NA
 data$sentiment_syuzhet <- get_sentiment(data$text)
 
-fig_sentiment <- ggplot(data %>% filter(date > "1950-04-11"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
-fig_sentiment
-
-fig_sentiment_China <- ggplot(data %>% filter(country == "China"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
-fig_sentiment_China  
-
-fig_Obama <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
-fig_Obama
 
 
-# Taking valence shifters into consideration with sentimentr
+# Taking valence shifters into consideration with sentimentr ----
 #===================#
 
 sentiment_df<-sentiment_by(text.var = data$text,
@@ -77,13 +66,9 @@ summary(sentiment_df$ave_sentiment)
 data <- cbind(data,sentiment_df$ave_sentiment)
 data <-data %>% rename(sentiment_valence = V2)
 
-fig_3 <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_valence, color = sentiment_valence)) + geom_point() +
-  geom_smooth(aes(x=date,y=sentiment_valence),method=lm, se=FALSE)
-fig_3
-
 rm(sentiment_df)
 
-# Sentiment Analysis with simple AFINN according to method with cleaned corpus.
+# Sentiment Analysis with simple AFINN according to method with cleaned corpus. ----
 # Allows for stopwords removal and better cleaning and considers collocations
 #===================#
 
@@ -121,13 +106,43 @@ sentiment_corpus_dfm_AFINN <- sentiment_corpus_dfm %>%
 
 emotion <- convert(sentiment_corpus_dfm_AFINN, to = "data.frame")
 net_emotion_AFINN <- emotion$positive-emotion$negative
-data <- cbind(data,net_emotion_AFINN)
+data <- cbind(data, net_emotion_AFINN)
 
-rm(sentiment_corpus_dfm, sentiment_corpus_dfm_AFINN, sentiment_corpus_tokens, 
-   net_emotion_AFINN, sentiment_corpus, emotion, collocations)
+rm(sentiment_corpus_dfm, 
+   sentiment_corpus_dfm_AFINN, 
+   sentiment_corpus_tokens, 
+   net_emotion_AFINN, 
+   sentiment_corpus, 
+   emotion, 
+   collocations)
 
+# Plots ----
 #===================#
 
+# plots with syuzhet
+fig_syuzhet <- ggplot(data %>% filter(date > "1950-04-11"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
+  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
+
+fig_syuzhet_China <- ggplot(data %>% filter(country == "China"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
+  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
+
+fig_syuzhet_Obama <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_syuzhet, color = sentiment_syuzhet)) + geom_point() +
+  geom_smooth(aes(x=date,y=sentiment_syuzhet),method=lm, se=FALSE)
+
+fig_syuzhet
+fig_syuzhet_China
+fig_syuzhet_Obama
+
+# plots with valence shifters
+fig_valence_shifters <- ggplot(data %>% filter(president == "Barack Obama"),aes(x=date,y=sentiment_valence, color = sentiment_valence)) + geom_point() +
+  geom_smooth(aes(x=date,y=sentiment_valence),method=lm, se=FALSE)
+
+fig_valence_shifters
+
+
+
+
+# everything below this is WIP
 format(as.Date(data$date, format="%d/%m/%Y"),"%Y")
 
 test_data <- data %>% group_by(country) %>% summarise(n = n(), min_rank(n)) %>% filter(min_rank(n) < 10)
