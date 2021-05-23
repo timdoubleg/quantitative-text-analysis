@@ -114,6 +114,11 @@ pred_nm <- predict(tmod_nm)
 count <-table(pred_nm) 
 count
 
+# manually checking validity of the classification
+set.seed(123)
+checking_results <- data[sample(.N,30)]
+checking_results$text
+
 # plot the newsmap
 dat_country <- as.data.frame(count, stringsAsFactors = FALSE)
 dat_country <- dat_country[order(-dat_country$Freq),]
