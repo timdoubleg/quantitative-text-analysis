@@ -124,10 +124,10 @@ data<-cbind(data,highest_topic)
 #===================#
 
 # filter topics for which we are certain, won't concern foreign policy
-undesired_topics <- c('agriculture', 'education', 'forestry', 'social_welfare', 'housing')
-data_sub <- filter(data, !highest_topic %in% undesired_topics)
+undesired_topics <- c('agriculture', 'education', 'forestry', 'social_welfare', 'housing', 'civil_rights')
+data <- filter(data, !highest_topic %in% undesired_topics)
 
-eo.corpus <- corpus(data_sub, 
+eo.corpus <- corpus(data, 
                     docid_field =  "eo_number", 
                     text_field = 'text')
 head(summary(eo.corpus))
@@ -164,7 +164,6 @@ df$word <- rownames(df)
 rownames(df) <- NULL
 df <- df %>% separate(word, c('ISO', 'Word'))
 colnames(df) <- c('weight', 'ISO', 'word')
-str(df)
 
 plot.coef <- ggplot(df, aes(x = reorder(word, weight), y=weight, fill = ISO)) +
   geom_col(show.legend = NULL)  +
@@ -203,16 +202,17 @@ plot.map <- ggplot(dat_country, aes(map_id = id)) +
 plot.map
 
 # check Top 10 countries and convert ISO
-top10 <- dat_country[1:10, ]
-top10$country <- countrycode(top10$id, origin = 'iso2c', destination = 'country.name')
-top10 <- top10[order(-top10$frequency),]
-rownames(top10) <- NULL
+top20 <- dat_country[1:20, ]
+top20$country <- countrycode(top20$id, origin = 'iso2c', destination = 'country.name')
+top20 <- top20[order(-top20$frequency),]
+rownames(top20) <- NULL
 
 # add country to dataframe
 data$iso <- pred_nm
 data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
 
 # get EOs only for top 10 countries
+top10 <- top20[1:10,]
 target <- top10$country
 eo.top10 <- filter(data, country %in% target)
 nrow(eo.top10)/nrow(data) # account for the majority
@@ -227,6 +227,24 @@ plot.top10 <- ggplot(top10, aes(x = frequency, y = reorder(country, frequency)))
   ) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black"))
 plot.top10
+
+
+# plot frequency of top 10 countries without US Territories
+us_territories <- c('Samoa', 'Puerto Rico', 'United States', 'Northern Mariana Islands', 'British Virgin Islands', 'Guam') # British Virigin Island is wrongly classified from the American Virign Islands
+top10_noUSterr <- filter(top20, !country %in% us_territories) 
+top10_noUSterr <- top10_noUSterr[1:10,]
+target <- top10_noUSterr$country
+eo.top10 <- filter(data, country %in% target)
+  
+plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = frequency, y = reorder(country, frequency))) +
+  geom_bar(stat = 'identity') + 
+  labs(title = 'Top 10 Frequency of countries without US Territories (1950 -2021)', 
+       y = '',
+       x = 'number of EOs',
+       subtitle = paste0('n = ', nrow(eo.top10))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black"))
+plot.top10.noUSterr
 
 
 # plot counts over times
@@ -270,15 +288,12 @@ plot.top10.time
 
 # save plots
 dir.create('./plots')
-ggsave('plot_president.png', path = './plots/', plot = plot.eo.president, device = 'png')
 ggsave('plot_topics.png', path = './plots/', plot = plot.topics, device = 'png')
 ggsave('plot.top10.png', path = './plots/', plot = plot.top10, device = 'png')
 ggsave('plot.coef.png', path = './plots/', plot = plot.coef, device = 'png')
 ggsave('plot.map.png', path = './plots/', plot = plot.map, device = 'png')
 ggsave('plot.top10.time.png', path = './plots/', plot = plot.top10.time, device = 'png')
-
-plot.top10.time
-
+ggsave('plot.top10.noUSterr.png', path = './plots/', plot = plot.top10.noUSterr, device = 'png')
 
 
 #Save new dataframe
