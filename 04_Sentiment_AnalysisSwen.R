@@ -127,14 +127,14 @@ apply(sentiment_scores_afinn, 2, range)
 range(data$sentiment_valence)
 
 #none of the four afinn indices is comparable to sentimentr results
-#for the final analysis, the clean.sqrt index will be used
+#for the final analysis, the sent_afinn.sqrt index will be used
 #to provide somewhat better comparability, its range will be normalized, i.e. divided by the difference in range compared to sentimentr
 
 #merging with "data"
 data <- sentiment_scores_afinn %>%
   transmute(
-   sent_afinn_weighted = sent_afinn_cleaned.sqrt /
-     {function(x,y) (max(x)-min(x))/(max(y)-min(y)) } (sentiment_scores_afinn$sent_afinn_cleaned.sqrt, data$sentiment_valence)
+   sent_afinn_weighted = sent_afinn.sqrt /
+     {function(x,y) (max(x)-min(x))/(max(y)-min(y)) } (sentiment_scores_afinn$sent_afinn.sqrt, data$sentiment_valence)
   ) %>%
   cbind(data)
 
