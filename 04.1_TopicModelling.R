@@ -37,7 +37,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 data <- fread('./data/executive_orders_withcountry.csv')
 
 
-# 1 ... ----
+# 1 Functions ----
 #===================#
 
 
@@ -46,7 +46,7 @@ my_colors <- c("#E69F00", "#56B4E9", "#009E73", "#CC79A7", "#D55E00", "#D65E00")
 
 #customize ggplot2's default theme settings
 #this tutorial doesn't actually pass any parameters, but you may use it again in future tutorials so it's nice to have the options
-theme_lyrics <- function(aticks = element_blank(),
+theme_custom <- function(aticks = element_blank(),
                          pgminor = element_blank(),
                          lt = element_blank(),
                          lp = "none")
@@ -58,52 +58,6 @@ theme_lyrics <- function(aticks = element_blank(),
         legend.position = lp) #turn on or off the legend
 }
 
-#customize the text tables for consistency using HTML formatting
-my_kable_styling <- function(dat, caption) {
-  kable(dat, "html", escape = FALSE, caption = caption) %>%
-    kable_styling(bootstrap_options = c("striped", "condensed", "bordered"),
-                  full_width = FALSE)
-}
-
-word_chart <- function(data, input, title) {
-  data %>%
-    #set y = 1 to just plot one variable and use word as the label
-    ggplot(aes(as.factor(row), 1, label = input, fill = factor(topic) )) +
-    #you want the words, not the points
-    geom_point(color = "transparent") +
-    #make sure the labels don't overlap
-    geom_label_repel(nudge_x = .2,  
-                     direction = "y",
-                     box.padding = 0.1,
-                     segment.color = "transparent",
-                     size = 3) +
-    facet_grid(~topic) +
-    theme_lyrics() +
-    theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-          #axis.title.x = element_text(size = 9),
-          panel.grid = element_blank(), panel.background = element_blank(),
-          panel.border = element_rect("lightgray", fill = NA),
-          strip.text.x = element_text(size = 9)) +
-    labs(x = NULL, y = NULL, title = title) +
-    #xlab(NULL) + ylab(NULL) +
-    #ggtitle(title) +
-    coord_flip()
-}
-
-# three_sources_tidy_balanced <- fread('./data/three_sources_tidy_balanced.csv')
-# 
-# three_sources_tidy_balanced %>%
-#   group_by(source) %>%
-#   mutate(word_count = n()) %>%
-#   select(source, genre, word_count) %>% #only need these fields
-#   distinct() %>%
-#   ungroup() %>%
-#   #assign color bar for word_count that varies according to size
-#   #create static color for source and genre
-#   mutate(word_count = color_bar("lightpink")(word_count),  
-#          source = color_tile("lightblue","lightblue")(source),
-#          genre = color_tile("lightgreen","lightgreen")(genre)) %>%
-#   my_kable_styling("Three Sources Stats")
 
 # Data Cleaning ----
 #===================#
@@ -165,8 +119,11 @@ plot.decades <- data %>%
   theme(plot.title = element_text(hjust = 0.5),
         legend.title = element_blank(),
         panel.grid.minor = element_blank()) +
-  ggtitle("EOs Counts per decade") +
-  labs(x = NULL, y = "EO count")
+  labs(title = 'EO Count per decade', 
+       y = 'EO counts',
+       x = '',
+       subtitle = paste0('n = ', nrow(data))) +
+  theme_bw()
 plot.decades
 
 # count words
@@ -285,7 +242,7 @@ plot <- function(df, title) {
   labs(x = NULL, y = "TF-IDF") + 
   labs(title = 'Important Words using TF-IDF', 
        subtitle = title) +
-  theme_lyrics() +  
+  theme_custom() +  
   facet_wrap(~decade, 
              ncol = 3, nrow = 3, 
              scales = "free") +
@@ -301,6 +258,11 @@ plot(tfidf.decade, '(Grouped by decades)')
 plot(tfidf.onlychina, '(Grouped by China)')
 
 
+# Save  ----
+#===================#
+dir.create('./plots')
+
+ggsave('plot_decades.png', path = './plots/', plot = plot.decades, device = 'png')
 
 
 

@@ -50,9 +50,19 @@ plot.eo.president <- ggplot(president.long, aes(year, n, fill = (president))) +
 
 plot.eo.president
 
-# Geographies----
+# Geographical Classification ----
 #===================#
 
+# make all lowercase
+data$text <- sapply(data$text, tolower)
+
+# remove special characters
+removeSpecialChars <- function(x) gsub("[^a-z ]", " ", x)
+data$text <- sapply(data$text, removeSpecialChars)
+
+# combine title and text 
+data$text <- with(data, paste0(title, text))
+ 
 # make a corpus
 eo.corpus <- corpus(data, 
                     docid_field =  "eo_number", 
@@ -60,9 +70,10 @@ eo.corpus <- corpus(data,
 head(summary(eo.corpus))
 
 # set some dictionaries for later
-month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
-day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
-USA <- c("States", "Sec", "United","Act","Secretary","Council","State","Department","General","Section","Management","America","Committee","American","Americans","Washington")
+month <- (c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"))
+day <- (c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"))
+USA <- (c("States", "Sec", "sec", "United","Act","Secretary","Council","State","Department","General","Section", "section", "management","America","committee","American","Americans","Washington", 
+                 'Executive', 'President'))
 
 # create tokens
 eo.tokens <- tokens(eo.corpus, 
@@ -72,19 +83,23 @@ eo.tokens <- tokens(eo.corpus,
             tokens_remove(c(stopwords("english"),
                               month,
                               day,
-                              USA)) 
+                              USA, 
+                            valuetype = 'regex')) # regular expression 
 
 # create labels
 eo.label <- tokens_lookup(eo.tokens, 
                             dictionary = data_dictionary_newsmap_en, 
-                            levels = 3) # level 3 stands for countries
+                            levels = 3, # level 3 stands for countries
+                          nested_scope = 'dictionary') # reduce ambiguity in dictionary lookup
 
 # Document-feature matrix
 dfmat_label <- dfm(eo.label, tolower = FALSE)
 dfmat_feat <- dfm(eo.tokens, tolower = FALSE)
 
 # select 
-dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z0-9]+", 
+dfmat_feat_select <- dfm_select(dfmat_feat, 
+                                selection = 'keep', # keep features
+                                pattern = "^[A-Z][A-Za-z]+", 
                                 valuetype = "regex", case_insensitive = FALSE) %>% 
   dfm_trim(min_termfreq = 10)
 
@@ -92,7 +107,7 @@ dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z0-9]+",
 tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label) 
 
 # check which coefficients are associated to the individual countries
-coef(tmod_nm,n=15)[c("US","CN","IQ", "IN")] 
+coef(tmod_nm,n=15)[c("US","CN","IQ", "JP", "IN")] 
 
 # predict and cluster country labels on our documents
 pred_nm <- predict(tmod_nm)
@@ -133,6 +148,10 @@ rownames(top10) <- NULL
 data$iso <- pred_nm
 data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
 
+
+# Plots----
+#===================#
+
 # get EOs only for top 10 countries
 target <- top10$country
 eo.top10 <- filter(data, country %in% target)
@@ -148,7 +167,6 @@ plot.top10 <- ggplot(top10, aes(x = frequency, y = reorder(country, frequency)))
   ) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black"))
 plot.top10
-
 
 # plot counts over times
 eo.top10$year <- year(eo.top10$date)
@@ -185,5 +203,12 @@ plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country)
 plot.top10.time
 
 
-### Save new dataframe ###
+# Save  ----
+#===================#¨
+
+# save plots
+dir.create('./plots')
+ggsave('plot_president.png', path = './plots/', plot = plot.eo.president, device = 'png')
+
+#Save new dataframe
 fwrite(data, './data/executive_orders_withcountry.csv')

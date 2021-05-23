@@ -5,8 +5,7 @@ library(tidyverse)
 library(dplyr)
 
 
-# set wd to where the sour% 
-ce file is
+# set wd to where the source is
 # make sure you have the datafiles in a /data/ folder
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
@@ -35,10 +34,6 @@ data$title <- str_sub(data$H1, start = 23)
 head(data$title)
 tail(data$title)
 
-# extract presidents
-data$president <- sub(",.*", "", data$H3)
-unique(data$president)
-
 # extract date
 data$date <- str_sub(data$date, start = 6, end = -3)
 data$date <- as.Date(data$date, format = "%B %d, %Y")
@@ -49,6 +44,10 @@ data <- data[data$date > '1950-01-01',]
 
 # drop duplicate EOs
 data <- data[!duplicated(data$eo_number),]
+
+# extract presidents
+data$president <- sub(",.*", "", data$H3)
+unique(data$president)
 
 # drop not needed columns 
 data <- subset(data, select = -c(URL, H1, H2, H3))
