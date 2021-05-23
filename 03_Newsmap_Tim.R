@@ -20,9 +20,14 @@ library(newsmap)
 library(sentimentr)
 library(data.table)
 library(tidyr)
+library(tidytext)
 library(maps)
 library(countrycode)
 library(ggplot2)
+
+# check newsmap package version
+packinfo <- installed.packages(fields = c("Package", "Version"))
+packinfo['newsmap',c("Package", "Version")]
 
 # Setup----
 #===================#
@@ -53,40 +58,53 @@ plot.eo.president
 # Geographical Classification ----
 #===================#
 
-# make all lowercase
+# merge title and text
+data$text <- paste0(data$title,' ', data$text)
+
+# convert everything to lower case
 data$text <- sapply(data$text, tolower)
 
 # remove special characters
-removeSpecialChars <- function(x) gsub("[^a-z ]", " ", x)
+removeSpecialChars <- function(x) gsub("[^a-zA-Z ]", " ", x)
 data$text <- sapply(data$text, removeSpecialChars)
 
-# combine title and text 
-data$text <- with(data, paste0(title, text))
- 
+# examine first 300 characters of text
+str(data[1, ]$text, nchar.max = 300)
+str(data)
+
+# manual exclusion of words
+undesirable_words <- c('president', 'united', 'states', 'of', 'america', 'american', 
+                       'executive', 'order', 'presidency', 'secretary', 'section', 'act')
+presidents <- tolower(unique(data$president))
+presidents <- unlist(strsplit(presidents, " "))
+alphabet <- c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'g', 'h', 'i', 'j', 'k' , 'l' , 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
+lists <- c('i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x')
+month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
+day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
+USA <- c("United","America","American","Americans","Washington")
+start <- tolower(c('About Search', 'By the authority',  'vested in me as President by the Constitution', 'the laws of the United States of America', 'it is hereby ordered as follows', 'by virtue of the authority vested in me'))
+end <-  tolower(c('The American Presidency Project', 'The American Presidency ProjectJohn Woolley and Gerhard PetersContact, Twitter Facebook, Copyright', 'The American Presidency ProjectTerms of Service'))
+undesirable_words <- tolower(append(undesirable_words, c(presidents, alphabet, lists, month, day, USA, start, end))) 
+
 # make a corpus
 eo.corpus <- corpus(data, 
                     docid_field =  "eo_number", 
                     text_field = 'text')
 head(summary(eo.corpus))
 
-# set some dictionaries for later
-month <- (c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"))
-day <- (c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"))
-USA <- (c("States", "Sec", "sec", "United","Act","Secretary","Council","State","Department","General","Section", "section", "management","America","committee","American","Americans","Washington", 
-                 'Executive', 'President'))
-
 # create tokens
 eo.tokens <- tokens(eo.corpus, 
                        remove_punct = TRUE,
                        remove_numbers = TRUE,
                        remove_symbols = TRUE) %>%
+            tokens_tolower() %>%
             tokens_remove(c(stopwords("english"),
                               month,
                               day,
-                              USA, 
+                              undesirable_words,
                             valuetype = 'regex')) # regular expression 
 
-# create labels
+# create labels (this is the part, which breaks)
 eo.label <- tokens_lookup(eo.tokens, 
                             dictionary = data_dictionary_newsmap_en, 
                             levels = 3, # level 3 stands for countries
@@ -100,7 +118,7 @@ dfmat_feat <- dfm(eo.tokens, tolower = FALSE)
 dfmat_feat_select <- dfm_select(dfmat_feat, 
                                 selection = 'keep', # keep features
                                 pattern = "^[A-Z][A-Za-z]+", 
-                                valuetype = "regex", case_insensitive = FALSE) %>% 
+                                valuetype = "regex", case_insensitive = TRUE) %>% 
   dfm_trim(min_termfreq = 10)
 
 # train the newsmap textmodel
@@ -113,6 +131,7 @@ coef(tmod_nm,n=15)[c("US","CN","IQ", "JP", "IN")]
 pred_nm <- predict(tmod_nm)
 count <-table(pred_nm) 
 count
+
 
 # manually checking validity of the classification
 set.seed(123)
@@ -138,14 +157,9 @@ plot.map <- ggplot(dat_country, aes(map_id = id)) +
        subtitle = paste0('n = ', nrow(data)))
 plot.map
 
-# check for counts of EU
-target <- c('Germany', 'France', 'Italy', 'United Kingdom', 'Belgium', 'Poland', 'Sweden')
-EU <- filter(dat_country, country %in% target)
-sum(EU$Freq)
 
 # check Top 10 countries and convert ISO
 top10 <- dat_country[1:10, ]
-top10$country <- countrycode(top10$id, origin = 'iso2c', destination = 'country.name')
 top10 <- top10[order(-top10$frequency),]
 rownames(top10) <- NULL
 
