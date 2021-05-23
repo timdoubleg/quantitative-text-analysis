@@ -122,7 +122,7 @@ for (i in 1:nrow(filtered.urls)){
     return(NA)
     }
   )
-}% 
+}
 
 # merge all lists into a dataframe
 df <- do.call(rbind, Map(data.frame, 
