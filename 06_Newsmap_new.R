@@ -155,16 +155,11 @@ pred_nm <- predict(tmod_nm)
 count <-table(pred_nm) 
 count
 
-# add country to dataframe
-data$iso <- pred_nm
-data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
-
-
 # plot the newsmap
 dat_country <- as.data.frame(count, stringsAsFactors = FALSE)
 dat_country <- dat_country[order(-dat_country$Freq),]
 dat_country$country <- countrycode(dat_country$pred_nm, origin = 'iso2c', destination = 'country.name')
-colnames(dat_country) <- c("id", "frequency")
+colnames(dat_country) <- c("id", "frequency","country")
 world_map <- map_data(map = "world")
 world_map$region <- iso.alpha(world_map$region) # convert country name to ISO code
 
@@ -182,13 +177,17 @@ plot.map
 # check for counts of EU
 target <- c('Germany', 'France', 'Italy', 'United Kingdom', 'Belgium', 'Poland', 'Sweden')
 EU <- filter(dat_country, country %in% target)
-sum(EU$Freq)
+sum(EU$frequency)
 
 # check Top 10 countries and convert ISO
 top10 <- dat_country[1:10, ]
 top10$country <- countrycode(top10$id, origin = 'iso2c', destination = 'country.name')
 top10 <- top10[order(-top10$frequency),]
 rownames(top10) <- NULL
+
+# add country to dataframe
+data$iso <- pred_nm
+data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
 
 # get EOs only for top 10 countries
 target <- top10$country
