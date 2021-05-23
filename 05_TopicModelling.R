@@ -72,7 +72,7 @@ eo.dfm <- eo.china.corpus %>%
 topfeatures(eo.dfm, 20)
 
 # remove our own words
-words <- c('united', 'states', 'president', 'america', 'presidency')
+words <- c('united', 'states', 'president', 'america', 'presidency', 'sec')
 alphabet <- c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'g', 'h')
 lists <- c('i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x')
 
