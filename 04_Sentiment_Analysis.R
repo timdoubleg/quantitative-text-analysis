@@ -55,9 +55,7 @@ summary(sentiment_df$ave_sentiment)
 data <- cbind(data,sentiment_df$ave_sentiment)
 data <-data %>% rename(sentiment_valence = V2)
 
-plot.sentiment_by(sentiment_df)
-
-rm(sentiment_df)
+#rm(sentiment_df)
 
 
 
@@ -106,8 +104,7 @@ sentiment_corpus_dfm_AFINN <- sentiment_corpus_dfm %>%
 sentiment_corpus_combined <- data.frame(c(
    convert(sentiment_corpus_dfm_AFINN, to = "data.frame")),
    data.frame(ntoken(sentiment_corpus)),
-   data.frame(ntoken(sentiment_corpus_dfm)),
-   row.names = FALSE)
+   data.frame(ntoken(sentiment_corpus_dfm)))
 colnames(sentiment_corpus_combined)[4:5] <- c("n_tokens", "n_tokens_cleaned")
 
 #creating four afinn score indices
@@ -139,14 +136,17 @@ data <- sentiment_scores_afinn %>%
   cbind(data)
 
 
-rm(sentiment_corpus_dfm, 
-   sentiment_corpus_dfm_AFINN, 
-   sentiment_corpus_tokens, 
-   net_emotion_AFINN, 
-   sentiment_corpus, 
-   sentiment_corpus_combined,
-   emotion, 
-   collocations)
+#rm(sentiment_corpus_dfm, 
+#   sentiment_corpus_dfm_AFINN, 
+#   sentiment_corpus_tokens, 
+ #  net_emotion_AFINN, 
+  # sentiment_corpus, 
+   #sentiment_corpus_combined,
+   #emotion, 
+   #collocations)
+
+fwrite(data, './data/executive_orders_withsentiments.csv')
+
 
 # Plots ----
 #===================#
@@ -156,7 +156,8 @@ fig_index_comparison1 <- ggplot(data %>% gather(key = "type_of_index", value = "
   geom_histogram(binwidth = .01) +
   facet_grid(rows = vars(type_of_index)) +
   xlim(-0.8,0.8) +
-  labs(title = "Comparing the density of sentiment values by afinn and sentimentr")
+  labs(title = "Comparing the density of sentiment values by afinn and sentimentr",
+       subtitle = "n = 3918")
 
 fig_index_comparison2 <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=date,y=value)) +
   geom_point(aes(color=president),alpha = 0.2) +
@@ -164,9 +165,47 @@ fig_index_comparison2 <- ggplot(data %>% gather(key = "type_of_index", value = "
   facet_grid(cols = vars(type_of_index)) +
   ylim(-0.8,0.8) +
   theme(legend.position = "top") +
-  labs(title = "Comparing sentiment values by afinn and sentimentr over time")
+  labs(title = "Comparing sentiment values by afinn and sentimentr over time",
+       subtitle = "n = 3918") +
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
 
+fig_index_comparison3 <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=president,y=value)) +
+  geom_boxplot(aes(color=president)) +
+  facet_grid(cols = vars(type_of_index)) +
+  theme(legend.position = "top") +
+  labs(title = "Comparing sentiment values by afinn and sentimentr between presidents",
+       subtitle = "n = 3918") +
+  coord_flip()
+
+fig_index_comparison4 <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=president,y=value)) +
+  geom_boxplot(aes(color=type_of_index)) +
+  theme(legend.position = "top") +
+  labs(title = "Comparing sentiment values by afinn and sentimentr between presidents",
+       subtitle = "n = 3918") +
+  coord_flip()
+
+fig_index_comparison5 <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=party,y=value)) +
+  geom_boxplot(aes(color=type_of_index)) +
+  theme(legend.position = "top") +
+  labs(title = "Comparing sentiment values by afinn and sentimentr between parties",
+       subtitle = "n = 3918") +
+  coord_flip()
 
 ## plot output----
 fig_index_comparison1
 fig_index_comparison2
+fig_index_comparison3
+fig_index_comparison4
+fig_index_comparison5
+
+unique(data$party)
+
+data[][data$party == "Demcrat"]
+
+data$party[data$party == "Demcrat"] <- "Democrat"
+
+
+
+
+
+
