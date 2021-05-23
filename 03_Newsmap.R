@@ -62,7 +62,7 @@ head(summary(eo.corpus))
 # set some dictionaries for later
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
-USA <- c("States", "Sec", "United","Act","Secretary","Council","State","Department","General","Section","Management","America","Committee","American","Americans","Washington")
+USA <- c("United","America","American","Americans","Washington")
 
 # create tokens
 eo.tokens <- tokens(eo.corpus, 
@@ -98,6 +98,11 @@ coef(tmod_nm,n=15)[c("US","CN","IQ", "IN")]
 pred_nm <- predict(tmod_nm)
 count <-table(pred_nm) 
 count
+
+# manually checking validity of the classification
+set.seed(123)
+checking_results <- data[sample(.N,30)]
+checking_results$text
 
 # plot the newsmap
 dat_country <- as.data.frame(count, stringsAsFactors = FALSE)
@@ -183,7 +188,6 @@ plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country)
   theme_bw() + 
   theme(legend.position = "none") 
 plot.top10.time
-
 
 ### Save new dataframe ###
 fwrite(data, './data/executive_orders_withcountry.csv')
