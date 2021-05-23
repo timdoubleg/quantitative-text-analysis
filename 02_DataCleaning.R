@@ -5,8 +5,7 @@ library(tidyverse)
 library(dplyr)
 
 
-# set wd to where the sour% 
-ce file is
+# set wd to where the source file is
 # make sure you have the datafiles in a /data/ folder
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
@@ -39,7 +38,8 @@ tail(data$title)
 data$president <- sub(",.*", "", data$H3)
 unique(data$president)
 
-# extract date
+# extract date (if it doesn't work, use "Sys.setlocale("LC_TIME", "English")" 
+# to change language of as.date to English)
 data$date <- str_sub(data$date, start = 6, end = -3)
 data$date <- as.Date(data$date, format = "%B %d, %Y")
 head(data$date)
