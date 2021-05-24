@@ -58,7 +58,7 @@ data <- data %>%
     party = case_when(
       str_detect(president, "Truman")         ~ "Democrat",
       str_detect(president, "Eisenhower")     ~ "Republican",
-      str_detect(president, "Kennedy")        ~ "Demcrat",
+      str_detect(president, "Kennedy")        ~ "Democrat",
       str_detect(president, "Johnson")        ~ "Democrat",
       str_detect(president, "Nixon")          ~ "Republican",
       str_detect(president, "Ford")           ~ "Republican",

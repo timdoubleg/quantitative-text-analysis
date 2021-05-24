@@ -244,8 +244,14 @@ top20 <- top20[order(-top20$frequency),]
 rownames(top20) <- NULL
 
 # add country to dataframe
-data$iso <- pred_nm
-data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
+data_sub$iso <- pred_nm
+data_sub$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
+
+# get a random sample of n=30 to manually check accuracy
+set.seed(1234)
+checking_accuracy <- sample_n(data_sub, 30)
+# get a xlsx version for easier checking
+# write_xlsx(checking_accuracy,"C:\\Users\\User_name\\Desktop\\data_frame.xlsx")"
 
 # get EOs only for top 10 countries
 top10 <- top20[1:10,]
