@@ -97,6 +97,8 @@ topics.df
 # filter all topics for which we have more than x
 topics.df <- topics.df[topics.df$sum >250, ]
 topics.df$perc <- topics.df$sum / sum(topics.df$sum)
+topics.df <- topics.df %>% arrange(desc(sum))
+topics.highest <- topics.df[1:10, 'topic']
 
 # bar chart
 plot.topics <- ggplot(topics.df, aes(x = reorder(topic, perc), y= perc)) +
@@ -113,11 +115,45 @@ plot.topics
 topics.lexicoder <- convert(eo.dfm, to = 'data.frame')
 length(unique(topics.lexicoder$doc_id))
 
-highest_topic_df <- subset(topics.lexicoder, select = -c(doc_id) )
-highest_topic <- colnames(highest_topic_df)[max.col(highest_topic_df,ties.method="first")]
+# select only EOs for which we have enough topic classifications, else we omit those 
+# as they may be too ambiguous
+topics.df <- subset(topics.lexicoder, select = -c(doc_id))
+topics.df$rowSums <- rowSums(topics.df)
+topics.df$eo_number <- as.numeric(topics.lexicoder$doc_id)
+topics.df <- topics.df[topics.df$rowSums > 5, ]
+colnames <- colnames(topics.df)[max.col(topics.df[,-c(29,30)],ties.method="first")]
+for (i in 1:nrow(topics.df)) {
+  topics.df$topic[i] <- colnames[i]
+}
 
-# bind with original df
-data<-cbind(data,highest_topic)
+
+# merge with original data 
+data$year <- year(data$date) 
+topics.df <- left_join(topics.df, data, on = 'eo_number') %>% 
+  select(c(eo_number, topic, year, president))
+
+# conver to long 
+topics.long <- topics.df %>% 
+  filter(topic %in% topics.highest) %>% 
+  group_by(year, topic) %>% 
+  count(year, topic)
+
+# plot top topics over time
+plot.topics.time <- ggplot(topics.long, aes(x=year, y=n, color = factor(topic))) + 
+  geom_line() +
+  facet_grid(rows = vars(reorder(topic, -n)), scales = 'fixed', shrink = FALSE) +
+  labs(title = 'Top 10 Topics Counts over time (1950 -2021)', 
+       y = '',
+       x = 'Years',
+       subtitle = paste0('n = ', nrow(topics.df)), 
+       strip.text.y = element_text(
+         size = 9, color = "red", face = "bold.italic")
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw() + 
+  theme(legend.position = "none") 
+plot.topics.time
+
 
 
 # Geographical Classification ----
@@ -294,7 +330,8 @@ ggsave('plot.coef.png', path = './plots/', plot = plot.coef, device = 'png')
 ggsave('plot.map.png', path = './plots/', plot = plot.map, device = 'png')
 ggsave('plot.top10.time.png', path = './plots/', plot = plot.top10.time, device = 'png')
 ggsave('plot.top10.noUSterr.png', path = './plots/', plot = plot.top10.noUSterr, device = 'png')
+ggsave('plot.topics.time.png', path = './plots/', plot = plot.topics.time, device = 'png')
 
 
-#Save new dataframe
+# Save new dataframe
 fwrite(data, './data/executive_orders_withcountry.csv')
