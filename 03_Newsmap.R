@@ -44,135 +44,60 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 data <- fread('./data/executive_orders_cleaned.csv')
 
-# 2 Topic Modeling wtih Lexicoder ----
+# Set words to be cleaned ----
 #===================#
 
-# # download dictionary 
-# download.file('http://www.snsoroka.com/wp-content/uploads/2020/08/LTDjun2013.zip', 
-#               destfile = './data/policy_agendas_english.zip')
-
-# set up dictionary
-lexicoder <- dictionary(file = './data/LTDjun2013/policy_agendas_english.lcd')
-lengths(lexicoder)
-
-eo.corpus <- corpus(data, 
-                    docid_field =  "eo_number", 
-                    text_field = 'text')
-
-# remove our own words
-undesirable_words <- c('president', 'united', 'states', 'of', 'america', 'american', 
-                       'executive', 'order', 'presidency', 'secretary', 'section', 'act')
-presidents <- tolower(unique(data$president))
+# create a list of words we don't want to include
+undesirable_words <- c('President', 'United', 'States', 'of', 'America', 'American', 
+                       'Executive', 'Order', 'order', 'Presidency', 'secretary', 'Section', 'section', 'Act', 'sec.', 
+                       'Federal register')
+presidents <- (unique(data$president))
 presidents <- unlist(strsplit(presidents, " "))
-alphabet <- c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'g', 'h', 'i', 'j', 'k' , 'l' , 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
-lists <- c('i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x')
+alphabet <- c('(a)', '(b)', '(c)', '(d)', '(e)', '(f)', '(g)', '(h)', '(i)', '(g)', '(h)', '(i)', '(j)', '(k)', '(l)' , '(m)', '(n)', '(o)', '(p)', '(q)', '(r)', '(s)', '(t)', '(u)', '(v)', '(w)', '(x)', '(y)', '(z)')
+romanNumber <- c('(i)', '(ii)', '(iii)', '(iv)', '(v)', '(vi)', '(vii)', '(viii)', '(ix)', '(x)')
 month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
 day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
 USA <- c("United","America","American","Americans","Washington")
-start <- tolower(c('About Search', 'By the authority',  'vested in me as President by the Constitution', 'the laws of the United States of America', 'it is hereby ordered as follows', 'by virtue of the authority vested in me'))
-end <-  tolower(c('The American Presidency Project', 'The American Presidency ProjectJohn Woolley and Gerhard PetersContact, Twitter Facebook, Copyright', 'The American Presidency ProjectTerms of Service'))
-undesirable_words <- tolower(append(undesirable_words, c(presidents, alphabet, lists, month, day, USA, start, end))) 
+start <- (c('About Search', 'By the authority',  'vested in me as President by the Constitution', 'the laws of the United States of America', 'it is hereby ordered as follows', 'by virtue of the authority vested in me'))
+end <-  (c('The American Presidency Project', 'The American Presidency ProjectJohn Woolley and Gerhard PetersContact, Twitter Facebook, Copyright', 'The American Presidency ProjectTerms of Service'))
+undesirable_words <- (append(undesirable_words, c(presidents, alphabet, romanNumber, month, day, USA, start, end))) 
 
-eo.dfm <- eo.corpus %>%
-  dfm(., 
-      tolower = TRUE, 
-      remove = c(stopwords('english'), undesirable_words),
-      remove_punct = TRUE, 
-      remove_numbers = TRUE, 
-      remove_symbols = TRUE, 
-      remove_url = TRUE, 
-      remove_separators = TRUE, 
-      include_docvars = TRUE,
-      dictionary = lexicoder)
-
-head(eo.dfm)
-
-# plot the most used topics
-topics.df <- convert(eo.dfm, to = 'data.frame')
-topics.df <- data.frame(colSums(topics.df[,-1], dims = 1))
-topics.df$topic <- rownames(topics.df)
-colnames(topics.df) <- c('sum' , 'topic')
-topics.df
-
-# filter all topics for which we have more than x
-topics.df <- topics.df[topics.df$sum >250, ]
-topics.df$perc <- topics.df$sum / sum(topics.df$sum)
-topics.df <- topics.df %>% arrange(desc(sum))
-topics.highest <- topics.df[1:10, 'topic']
-
-# bar chart
-plot.topics <- ggplot(topics.df, aes(x = reorder(topic, perc), y= perc)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  theme_bw() + 
-  labs(title = 'Classified Topics with Lexicoder', 
-       y = 'percentage',
-       x = '',
-       subtitle = paste0('n = ', nrow(data)))
-plot.topics
-
-# compute the most relevant per document
-topics.lexicoder <- convert(eo.dfm, to = 'data.frame')
-length(unique(topics.lexicoder$doc_id))
-
-# select only EOs for which we have enough topic classifications, else we omit those 
-# as they may be too ambiguous
-topics.df <- subset(topics.lexicoder, select = -c(doc_id))
-topics.df$rowSums <- rowSums(topics.df)
-topics.df$eo_number <- as.numeric(topics.lexicoder$doc_id)
-topics.df <- topics.df[topics.df$rowSums > 5, ]
-colnames <- colnames(topics.df)[max.col(topics.df[,-c(29,30)],ties.method="first")]
-for (i in 1:nrow(topics.df)) {
-  topics.df$topic[i] <- colnames[i]
-}
-
-
-# merge with original data 
-data$year <- year(data$date) 
-topics.df <- left_join(topics.df, data, on = 'eo_number') %>% 
-  select(c(eo_number, topic, year, president))
-
-# conver to long 
-topics.long <- topics.df %>% 
-  filter(topic %in% topics.highest) %>% 
-  group_by(year, topic) %>% 
-  count(year, topic)
-
-# plot top topics over time
-plot.topics.time <- ggplot(topics.long, aes(x=year, y=n, color = factor(topic))) + 
-  geom_line() +
-  facet_grid(rows = vars(reorder(topic, -n)), scales = 'fixed', shrink = FALSE) +
-  labs(title = 'Top 10 Topics Counts over time (1950 -2021)', 
-       y = '',
-       x = 'Years',
-       subtitle = paste0('n = ', nrow(topics.df)), 
-       strip.text.y = element_text(
-         size = 9, color = "red", face = "bold.italic")
-  ) +
-  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  theme_bw() + 
-  theme(legend.position = "none") 
-plot.topics.time
-
-
-
-# Geographical Classification ----
+# Seed dictionary ----
 #===================#
 
-# filter topics for which we are certain, won't concern foreign policy
-undesired_topics <- c('agriculture', 'education', 'forestry', 'social_welfare', 'housing', 'civil_rights')
-data <- filter(data, !highest_topic %in% undesired_topics)
+# load the dictionary and check for keywords in china
+dictionary <- data_dictionary_newsmap_en
+dictionary$ASIA$EAST$CN
 
+# let's add some more words to the seed dictionary
+china <- c('Xi Jinping', 'People\'s Republic of China', 'PRC')
+china_municipalities <- c('Tianjin', 'Chongquing', 'Shanghai', 'Beijing')
+china_provinces <- c('Anhui', 'Fujian', 'Guangdong', 'Guizhou', 'Hainan', 'Hebei', 'Henan', 'Hubei',
+                     'Hunan', 'Gansu', 'Jiangxi', 'Jiangsu', 'Qinghai', 'Shaanxi', 'Shandong', 'Shanxi', 
+                     'Sichuan', 'Yunnan', 'Zhejiang', 'Manchuria', 'Heilongjiang', 'Jilin', 'Liaoning')
+china_specialregions <- c('Macau', 'Hongkong')
+china_autonomousregions <- c('Guangxi', 'Mongolia', 'Ningxia', 'Xinjiang', 'Tibet')
+
+  
+# we may want to add HK to it
+dictionary$ASIA$EAST$HK
+
+
+# Training and Predicting Geographical Classification ----
+#===================#
+
+# create a corpus
 eo.corpus <- corpus(data, 
                     docid_field =  "eo_number", 
                     text_field = 'text')
 head(summary(eo.corpus))
 
-# create tokens
+# create tokens and remove unwanted words
 eo.tokens <- tokens(eo.corpus, 
                     remove_punct = TRUE,
                     remove_numbers = TRUE,
-                    remove_symbols = TRUE) %>%
+                    remove_symbols = TRUE, 
+                    remove_url = TRUE) %>%
   tokens_remove(c(stopwords("english"),
                   undesirable_words)) 
 
@@ -181,44 +106,79 @@ eo.label <- tokens_lookup(eo.tokens,
                           dictionary = data_dictionary_newsmap_en, 
                           levels = 3) # level 3 stands for countries
 
+# manual label filtering
+# eo_number <- data$eo_number
+# list.value = {}
+# list.eonumber = {}
+# n = 0
+# for (i in eo_number) {
+#   string <- toString(i)
+#   if (length(eo.label[[string]]) != 0) {
+#     n = n+1
+#     list.eonumber[[n]] <- i
+#     list.value[[n]] <- eo.label[[string]]
+#   }
+# }
+# 
+# labels.df <- data.frame(matrix(unlist(list.value), nrow=length(list.value), byrow=TRUE))
+# labels.df$eo_number <- unlist(list.eonumber)
+#
+#eo.label[['14014']] <- NULL
+
+
 # Document-feature matrix
 dfmat_label <- dfm(eo.label, tolower = FALSE)
 dfmat_feat <- dfm(eo.tokens, tolower = FALSE)
 
 # select 
-dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z0-9]+", 
+dfmat_feat_select <- dfm_select(dfmat_feat, pattern = "^[A-Z][A-Za-z]+", 
                                 valuetype = "regex", case_insensitive = FALSE) %>% 
   dfm_trim(min_termfreq = 10)
 
-# train the newsmap textmodel
-tmod_nm <- textmodel_newsmap(dfmat_feat_select, y = dfmat_label) 
-
-# check which coefficients are associated to the individual countries
-coef <- coef(tmod_nm,n=15)[c("US","CN","IQ")] 
-df <- data.frame(unlist(coef)) 
-df$word <- rownames(df)
-rownames(df) <- NULL
-df <- df %>% separate(word, c('ISO', 'Word'))
-colnames(df) <- c('weight', 'ISO', 'word')
-
-plot.coef <- ggplot(df, aes(x = reorder(word, weight), y=weight, fill = ISO)) +
-  geom_col(show.legend = NULL)  +
-  facet_wrap(~ISO, 
-             ncol = 3, nrow = 1, 
-             scales = "free") +
-  theme(plot.subtitle=element_text(size=9, hjust=0.5, face="italic", color="black")) +
-  coord_flip() + 
-  labs(title = 'Highest weighted words of Newsmap for given countries', 
-       y = '',
-       x = '')
-plot.coef
+# train the Newsmap textmodel
+tmod_nm <- textmodel_newsmap(x = dfmat_feat_select, y = dfmat_label) 
   
 # predict and cluster country labels on our documents
 pred_nm <- predict(tmod_nm)
 count <-table(pred_nm) 
 count
 
-# plot the newsmap
+# add country to dataframe
+data$iso <- pred_nm
+data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
+
+# Analysis Geographical Classification ----
+#===================#
+
+# check which coefficients are associated to the individual countries
+coef <- coef(tmod_nm,n=10)[c("US","CN","HK", "MO")] 
+word.weight <- data.frame(unlist(coef)) 
+word.weight$word <- rownames(word.weight)
+rownames(word.weight) <- NULL
+word.weight <- word.weight %>% separate(word, c('ISO', 'Word'))
+colnames(word.weight) <- c('weight', 'ISO', 'word')
+
+# reorder
+word.weight <- data.table(word.weight)
+word.weight[, ord := sprintf("%02i", frank(word.weight, weight, ties.method = "first"))]
+
+# plot top 10 associated words
+plot.coef <- ggplot(word.weight, aes(x = ord, y = weight, fill = ISO)) +
+  geom_col(show.legend = NULL) +
+  # independent x-axis scale in each facet, 
+  # drop absent factor levels (actually not required here)
+  facet_wrap(~ ISO, ncol = 4, nrow = 1, scales = "free", drop = TRUE) +
+  # use named character vector to replace x-axis labels
+  scale_x_discrete(labels = word.weight[, setNames(as.character(word), ord)]) + 
+  xlab(NULL) +
+  theme(plot.subtitle=element_text(size=9, hjust=0.5, face="italic", color="black")) +
+  labs(title = 'Highest weighted words of Newsmap for given countries', 
+       y = '',
+       x = '') +
+  coord_flip()
+plot.coef
+
+# plot the aggregated worldmap 
 dat_country <- as.data.frame(count, stringsAsFactors = FALSE)
 dat_country <- dat_country[order(-dat_country$Freq),]
 dat_country$country <- countrycode(dat_country$pred_nm, origin = 'iso2c', destination = 'country.name')
@@ -242,16 +202,6 @@ top20 <- dat_country[1:20, ]
 top20$country <- countrycode(top20$id, origin = 'iso2c', destination = 'country.name')
 top20 <- top20[order(-top20$frequency),]
 rownames(top20) <- NULL
-
-# add country to dataframe
-data_sub$iso <- pred_nm
-data_sub$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.name')
-
-# get a random sample of n=30 to manually check accuracy
-set.seed(1234)
-checking_accuracy <- sample_n(data_sub, 30)
-# get a xlsx version for easier checking
-# write_xlsx(checking_accuracy,"C:\\Users\\User_name\\Desktop\\data_frame.xlsx")"
 
 # get EOs only for top 10 countries
 top10 <- top20[1:10,]
@@ -277,7 +227,7 @@ top10_noUSterr <- filter(top20, !country %in% us_territories)
 top10_noUSterr <- top10_noUSterr[1:10,]
 target <- top10_noUSterr$country
 eo.top10 <- filter(data, country %in% target)
-  
+
 plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = frequency, y = reorder(country, frequency))) +
   geom_bar(stat = 'identity') + 
   labs(title = 'Top 10 Frequency of countries without US Territories (1950 -2021)', 
@@ -290,9 +240,8 @@ plot.top10.noUSterr
 
 
 # plot counts over times
-eo.top10$year <- year(eo.top10$date)
-
 # count EOs per year and country
+eo.top10$year <- year(eo.top10$date)
 country.long <- eo.top10 %>% count(year, country)
 
 # plot top 10 over time
@@ -309,7 +258,7 @@ plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country)
   theme(legend.position = "none") 
 plot.top10.time
 
-# with fixed
+# with fixed scale
 plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country))) + 
   geom_line() +
   facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
@@ -322,6 +271,31 @@ plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country)
   theme_bw() + 
   theme(legend.position = "none") 
 plot.top10.time
+
+
+# Testing Accurarcy ----
+#===================#
+
+# get a random sample of n=30 to manually check accuracy
+set.seed(1234)
+checking_accuracy <- sample_n(data, 30)
+# get a xlsx version for easier checking
+# write_xlsx(checking_accuracy,"C:\\Users\\User_name\\Desktop\\data_frame.xlsx")"
+
+# get only predicted country: CHINA
+eo.china <- filter(data, iso == 'CN')
+eo.china$text <- NULL
+fwrite(eo.china, './data/executive_orders_china.csv')
+
+# get only predicted country: HONG KONG
+eo.hongkong <- filter(data, iso == 'HK')
+eo.hongkong$text <- NULL
+fwrite(eo.hongkong, './data/executive_orders_hongkong.csv')
+
+# get only predicted country: MACAU
+eo.macau <- filter(data, iso == 'MO')
+eo.macau$text <- NULL
+fwrite(eo.macau, './data/executive_orders_macau.csv')
 
 
 

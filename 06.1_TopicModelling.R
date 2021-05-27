@@ -79,22 +79,36 @@ str(data)
 # manual exclusion of words
 presidents <- tolower(unique(data$president))
 presidents <- unlist(strsplit(presidents, " "))
-undesirable_words <- c('about', 'search', 'president', 'united', 'states', 'of', 'america', 'american', 
-                       'executive', 'order', 'presidency', 'secretary', 'section', 'act')
-undesirable_words <- append(undesirable_words, presidents)
+# create a list of words we don't want to include
+undesirable_words <- c('President', 'United', 'States', 'of', 'America', 'American', 
+                       'Executive', 'Order', 'order', 'Presidency', 'federal', 'sec', 'secretary', 'Section', 'section', 'Act', 'sec.', 
+                       'Federal register')
+presidents <- (unique(data$president))
+presidents <- unlist(strsplit(presidents, " "))
+alphabet <- c('(a)', '(b)', '(c)', '(d)', '(e)', '(f)', '(g)', '(h)', '(i)', '(g)', '(h)', '(i)', '(j)', '(k)', '(l)' , '(m)', '(n)', '(o)', '(p)', '(q)', '(r)', '(s)', '(t)', '(u)', '(v)', '(w)', '(x)', '(y)', '(z)')
+romanNumber <- c('(i)', '(ii)', '(iii)', '(iv)', '(v)', '(vi)', '(vii)', '(viii)', '(ix)', '(x)')
+month <- c("January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December")
+day <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday")
+USA <- c("United","America","American","Americans","Washington")
+start <- (c('About Search', 'By the authority',  'vested in me as President by the Constitution', 'the laws of the United States of America', 'it is hereby ordered as follows', 'by virtue of the authority vested in me'))
+end <-  (c('The American Presidency Project', 'The American Presidency ProjectJohn Woolley and Gerhard PetersContact, Twitter Facebook, Copyright', 'The American Presidency ProjectTerms of Service'))
+undesirable_words <- tolower(append(undesirable_words, c(presidents, alphabet, romanNumber, month, day, USA, start, end))) 
+
 
 # tidy up data to word dataframe
 eo.words <- data %>%
   unnest_tokens(word, text) %>%
   anti_join(stop_words) %>%
   filter(!word %in% undesirable_words) %>% 
-  select(-c(document_type, title, iso))
+  select(-c(document_type, title))
 
 nrow(eo.words) # we have over 1500k non-unique words!
 
 
 # Simple Analysis  ----
 #===================#
+
+data$year <- year(data$date)
 
 #create the decade column
 data <- data %>%
@@ -134,7 +148,7 @@ full_word_count <- data %>%
   arrange(desc(num_words))
 full_word_count$perc_words = full_word_count$num_words/sum(full_word_count$num_words)
 full_word_count <- left_join(full_word_count, data, on = 'eo_number') %>% 
-  select(-c(text, date, document_type, iso, decade))
+  select(-c(text, date, document_type, decade))
 
 
 # plot EOs with top word counts
@@ -202,7 +216,7 @@ eo.words %>%
 
 # TF-IDF, inverse document frequency
 tfidf.decade <- eo.words %>%
-  left_join(data[, c('country', 'decade', 'eo_number')], on = 'eo_number') %>% 
+  left_join(data[, c('decade', 'eo_number')], on = 'eo_number') %>% 
   count(decade, word, sort = TRUE) %>%
   bind_tf_idf(word, decade, n) %>% 
   arrange(desc(tf_idf)) %>% 
@@ -213,7 +227,7 @@ tfidf.decade <- eo.words %>%
   mutate(row = row_number())
 
 tfidf.eonumber <- eo.words %>%
-  left_join(data[, c('country', 'decade', 'eo_number')], on = 'eo_number') %>% 
+  left_join(data[, c('decade', 'eo_number')], on = 'eo_number') %>% 
   count(eo_number, word, sort = TRUE) %>%
   bind_tf_idf(word, eo_number, n) %>% 
   arrange(desc(tf_idf)) %>% 
@@ -223,17 +237,17 @@ tfidf.eonumber <- eo.words %>%
   arrange(eo_number, tf_idf) %>%
   mutate(row = row_number())
 
-tfidf.onlychina <- eo.words %>%
-  left_join(data[, c('country', 'decade', 'eo_number')], on = 'eo_number') %>% 
-  filter(country == 'China') %>%
-  count(decade, word, sort = TRUE) %>%
-  bind_tf_idf(word, decade, n) %>% 
-  arrange(desc(tf_idf)) %>% 
-  group_by(decade) %>% 
-  slice(seq_len(10)) %>% 
-  ungroup() %>%
-  arrange(decade, tf_idf) %>%
-  mutate(row = row_number())
+# tfidf.onlychina <- eo.words %>%
+#   left_join(data[, c('country', 'decade', 'eo_number')], on = 'eo_number') %>% 
+#   filter(country == 'China') %>%
+#   count(decade, word, sort = TRUE) %>%
+#   bind_tf_idf(word, decade, n) %>% 
+#   arrange(desc(tf_idf)) %>% 
+#   group_by(decade) %>% 
+#   slice(seq_len(10)) %>% 
+#   ungroup() %>%
+#   arrange(decade, tf_idf) %>%
+#   mutate(row = row_number())
 
 
 plot <- function(df, title) {
@@ -255,7 +269,7 @@ plot <- function(df, title) {
 
 # plot the different types
 plot(tfidf.decade, '(Grouped by decades)')
-plot(tfidf.onlychina, '(Grouped by China)')
+#plot(tfidf.onlychina, '(Grouped by China)')
 
 
 # Save  ----
