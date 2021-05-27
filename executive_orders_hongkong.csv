@@ -1,8 +1,8 @@
-date,document_type,eo_number,title,president,party,iso,country
-14.07.20,Executive Order,13936,The President's Executive Order on Hong Kong Normalization,Donald J. Trump,Republican,HK,Hong Kong SAR China
-30.06.97,Executive Order,13052,Hong Kong Economic and Trade Offices,William J. Clinton,Democrat,HK,Hong Kong SAR China
-21.11.69,Executive Order,11496,Regulation Governing the Entry or Withdrawal From Warehouse of Certain Meat With Respect to Which an Agreement Has Been Concluded,Richard Nixon,Republican,HK,Hong Kong SAR China
-30.04.66,Executive Order,11277,"Designating the International Telecommunications Satellite Consortium as an International Organization Entitled to Enjoy Certain Privileges, Exemptions, and Immunities",Lyndon B. Johnson,Democrat,HK,Hong Kong SAR China
-13.05.65,Executive Order,11224,Designation of Certain Foreign Countries as Economically Less Developed Countries for Purposes of the Interest Equalization Tax,Lyndon B. Johnson,Democrat,HK,Hong Kong SAR China
-12.05.65,Executive Order,11223,"Relating to the Performance of Functions Authorized by the Foreign Assistance Act of 1961, as Amended",Lyndon B. Johnson,Democrat,HK,Hong Kong SAR China
-27.12.62,Executive Order,11071,Designation of Certain Foreign Countries as Economically Less Developed Countries for Purposes of the Revenue Act of 1962,John F. Kennedy,Demcrat,HK,Hong Kong SAR China
+date,document_type,eo_number,title,president,party,iso,country;China?
+14.07.20,Executive Order,13936,The President's Executive Order on Hong Kong Normalization,Donald J. Trump,Republican,HK,Hong Kong SAR China;x
+30.06.97,Executive Order,13052,Hong Kong Economic and Trade Offices,William J. Clinton,Democrat,HK,Hong Kong SAR China;x
+21.11.69,Executive Order,11496,Regulation Governing the Entry or Withdrawal From Warehouse of Certain Meat With Respect to Which an Agreement Has Been Concluded,Richard Nixon,Republican,HK,Hong Kong SAR China;
+"30.04.66,Executive Order,11277,""Designating the International Telecommunications Satellite Consortium as an International Organization Entitled to Enjoy Certain Privileges, Exemptions, and Immunities"",Lyndon B. Johnson,Democrat,HK,Hong Kong SAR China";
+13.05.65,Executive Order,11224,Designation of Certain Foreign Countries as Economically Less Developed Countries for Purposes of the Interest Equalization Tax,Lyndon B. Johnson,Democrat,HK,Hong Kong SAR China;x
+"12.05.65,Executive Order,11223,""Relating to the Performance of Functions Authorized by the Foreign Assistance Act of 1961, as Amended"",Lyndon B. Johnson,Democrat,HK,Hong Kong SAR China";x
+27.12.62,Executive Order,11071,Designation of Certain Foreign Countries as Economically Less Developed Countries for Purposes of the Revenue Act of 1962,John F. Kennedy,Demcrat,HK,Hong Kong SAR China;x
