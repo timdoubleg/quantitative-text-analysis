@@ -134,9 +134,19 @@ data <- sentiment_scores_afinn %>%
      {function(x,y) (max(x)-min(x))/(max(y)-min(y)) } (sentiment_scores_afinn$sent_afinn_cleaned.sqrt, data$sentiment_valence)
   ) %>%
   cbind(data)
+rm(list=ls(pattern="fig_"))
 
 
-#rm(sentiment_corpus_dfm, 
+#rm(sentiment_corpus_dfm, % 
+% 
+
+
+
+
+
+
+
+
 #   sentiment_corpus_dfm_AFINN, 
 #   sentiment_corpus_tokens, 
  #  net_emotion_AFINN, 
@@ -147,6 +157,29 @@ data <- sentiment_scores_afinn %>%
 
 fwrite(data, './data/executive_orders_withsentiments.csv')
 
+# Checking extremes ----
+#===================#
+
+data %>% arrange(sent_afinn_weighted) %>% summary
+
+top5_afinn <- select(data, c(eo_number, sent_afinn_weighted, sentiment_valence))
+top5_afinn <- data[order(data$sent_afinn_weighted)]
+top5_afinn <- data[1:5,]
+extreme_sent_values <- cbind(
+  top5_afinn)
+
+extreme_sent_values <- data %>% 
+  select(c(eo_number, sentiment_valence, sent_afinn_weighted)) %>%
+  gather(key = "type_of_index", value = "value", c(sentiment_valence, sent_afinn_weighted)) %>%
+  
+
+
+library(tidyr)
+library(dplyr)
+
+glimpse(rownames(data))
+
+gather(doc)
 
 # Plots ----
 #===================#
@@ -203,9 +236,3 @@ unique(data$party)
 data[][data$party == "Demcrat"]
 
 data$party[data$party == "Demcrat"] <- "Democrat"
-
-
-
-
-
-
