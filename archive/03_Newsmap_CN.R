@@ -43,6 +43,9 @@ rm(list=ls())
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 data <- fread('./data/executive_orders_cleaned.csv')
+data.china <- fread('./executive_orders_china.csv')
+data.hk <- fread('./executive_orders_hongkong.csv')
+
 
 # Set words to be cleaned ----
 #===================#
@@ -62,6 +65,36 @@ start <- (c('About Search', 'By the authority',  'vested in me as President by t
 end <-  (c('The American Presidency Project', 'The American Presidency ProjectJohn Woolley and Gerhard PetersContact, Twitter Facebook, Copyright', 'The American Presidency ProjectTerms of Service'))
 undesirable_words <- (append(undesirable_words, c(presidents, alphabet, romanNumber, month, day, USA, start, end))) 
 
+# Seed dictionary ----
+#===================#
+
+# load the dictionary and check for keywords in china, hongkong, macau
+dictionary <- data_dictionary_newsmap_en
+dictionary$ASIA$EAST$CN
+dictionary$ASIA$EAST$HK
+dictionary$ASIA$EAST$MO
+
+# let's add some more words to the seed dictionary
+china <- c('china', 'chinese', 'Xi Jinping', 'People\'s Republic of China', 'PRC')
+china_municipalities <- c('Tianjin', 'Chongquing', 'Shanghai', 'Beijing')
+china_provinces <- c('Anhui', 'Fujian', 'Guangdong', 'Guizhou', 'Hainan', 'Hebei', 'Henan', 'Hubei',
+                     'Hunan', 'Gansu', 'Jiangxi', 'Jiangsu', 'Qinghai', 'Shaanxi', 'Shandong', 'Shanxi', 
+                     'Sichuan', 'Yunnan', 'Zhejiang', 'Manchuria', 'Heilongjiang', 'Jilin', 'Liaoning')
+#china_specialregions <- c('Macau', 'Hongkong')
+china_autonomousregions <- c('Guangxi', 'Mongolia', 'Ningxia', 'Xinjiang', 'Tibet')
+china <- append(china, c(china_municipalities, china_provinces, china_autonomousregions))
+
+# create dictionary
+china.dic <- quanteda::dictionary(list(CN = tolower(china)))
+dictionary[['ASIA']][['EAST']][['CN']] <- china.dic$CN
+dictionary$ASIA$EAST$CN< - china.dic$CN
+dictionary[['ASIA']][['EAST']][['CN']] 
+dictionary[['ASIA']][['EAST']][['CN']]
+dictionary[['ASIA']]
+dictionary[['AMERICA']]
+class(china.dic)
+
+quanteda::dictionary_edit(data_dictionary_newsmap_en)
 
 # Training and Predicting Geographical Classification ----
 #===================#
@@ -83,28 +116,7 @@ eo.tokens <- tokens(eo.corpus,
 
 # create labels
 eo.label <- tokens_lookup(eo.tokens, 
-                          dictionary = data_dictionary_newsmap_en, 
-                          levels = 3) # level 3 stands for countries
-
-# manual label filtering
-# eo_number <- data$eo_number
-# list.value = {}
-# list.eonumber = {}
-# n = 0
-# for (i in eo_number) {
-#   string <- toString(i)
-#   if (length(eo.label[[string]]) != 0) {
-#     n = n+1
-#     list.eonumber[[n]] <- i
-#     list.value[[n]] <- eo.label[[string]]
-#   }
-# }
-# 
-# labels.df <- data.frame(matrix(unlist(list.value), nrow=length(list.value), byrow=TRUE))
-# labels.df$eo_number <- unlist(list.eonumber)
-#
-#eo.label[['14014']] <- NULL
-
+                          dictionary = china.dic) # level 3 stands for countries
 
 # Document-feature matrix
 dfmat_label <- dfm(eo.label, tolower = FALSE)
@@ -131,7 +143,7 @@ data$country <- countrycode(pred_nm, origin = 'iso2c', destination = 'country.na
 #===================#
 
 # check which coefficients are associated to the individual countries
-coef <- coef(tmod_nm,n=10)[c("US","CN","IQ", "JP")] 
+coef <- coef(tmod_nm,n=10)[c("US","CN","HK", "MO")] 
 word.weight <- data.frame(unlist(coef)) 
 word.weight$word <- rownames(word.weight)
 rownames(word.weight) <- NULL
@@ -145,6 +157,8 @@ word.weight[, ord := sprintf("%02i", frank(word.weight, weight, ties.method = "f
 # plot top 10 associated words
 plot.coef <- ggplot(word.weight, aes(x = ord, y = weight, fill = ISO)) +
   geom_col(show.legend = NULL) +
+  # independent x-axis scale in each facet, 
+  # drop absent factor levels (actually not required here)
   facet_wrap(~ ISO, ncol = 4, nrow = 1, scales = "free", drop = TRUE) +
   # use named character vector to replace x-axis labels
   scale_x_discrete(labels = word.weight[, setNames(as.character(word), ord)]) + 
@@ -190,7 +204,7 @@ nrow(eo.top10)/nrow(data) # account for the majority
 # plot frequency of top 10 countries
 plot.top10 <- ggplot(top10, aes(x = frequency, y = reorder(country, frequency))) +
   geom_bar(stat = 'identity') + 
-  labs(title = 'Top 10 Frequency of Countries (1950 -2021)', 
+  labs(title = 'Top 10 Frequency of countries (1950 -2021)', 
        y = '',
        x = 'number of EOs',
        subtitle = paste0('n = ', nrow(eo.top10))
@@ -204,137 +218,51 @@ us_territories <- c('Samoa', 'Puerto Rico', 'United States', 'Northern Mariana I
 top10_noUSterr <- filter(top20, !country %in% us_territories) 
 top10_noUSterr <- top10_noUSterr[1:10,]
 target <- top10_noUSterr$country
-top10_noUSterr <- filter(data, country %in% target) %>% 
-  count(country, party) %>% 
-  arrange(desc(n))
+eo.top10 <- filter(data, country %in% target)
 
-plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = n, y = reorder(country, n), fill = party)) +
-  geom_bar(stat = 'identity', position = 'dodge') + 
-  labs(title = 'Top 10 Frequency of Countries without US Territories (1950 -2021)', 
+plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = frequency, y = reorder(country, frequency))) +
+  geom_bar(stat = 'identity') + 
+  labs(title = 'Top 10 Frequency of countries without US Territories (1950 -2021)', 
        y = '',
        x = 'number of EOs',
        subtitle = paste0('n = ', nrow(eo.top10))
   ) +
-  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  scale_fill_manual(values=c("#0000FF", "#FF0000"))
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black"))
 plot.top10.noUSterr
 
 
 # plot counts over times
 # count EOs per year and country
 eo.top10$year <- year(eo.top10$date)
-eo.top10$text <- NULL
-eo.top10.all <- eo.top10 %>% count(year, country)
-eo.top10.party <- eo.top10 %>% count(year, country, party)
-eo.top10.president <- eo.top10 %>% count(year, country, president)
-
-# plot all 
-plot.top10.all <- ggplot(eo.top10.all, aes(x=year, y=n, color = factor(country))) + 
-  geom_line() +
-  facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
-  labs(title = 'Top 10 EOs counts per country (1950 -2021)', 
-       y = '',
-       x = 'Years',
-       subtitle = paste0('n = ', nrow(eo.top10))) +
-  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  theme_bw() + 
-  theme(legend.position = "none")
-plot.top10.all
-
-
-# Per Party and President ----
-#===================#
-
-# plot with party
-plot.top10.party <- ggplot(eo.top10.party, aes(x=year, y=n, color = factor(party))) + 
-  geom_point() +
-  facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
-  labs(title = 'Top 10 EOs counts per country and party (1950 -2021)', 
-       y = '',
-       x = 'Years',
-       subtitle = paste0('n = ', nrow(eo.top10))) +
-  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  theme_bw() + 
-  scale_color_manual(values=c("#0000FF", "#FF0000"))
-plot.top10.party
-
-# plot with president
-# first we need to reorder the factors
-eo.top10.president$president <- factor(eo.top10.president$president, 
-                                       levels = c("Harry S. Truman", "Dwight D. Eisenhower", "John F. Kennedy", "Lyndon B. Johnson", 
-                                                  'Richard Nixon', 'Gerald R. Ford', 'Jimmy Carter', 'Ronald Reagan', 'George Bush', 
-                                                  'William J. Clinton', 'George W. Bush', 'Barack Obama', 'Donald J. Trump', 'Joseph R. Biden'))
-plot.top10.president <- ggplot(eo.top10.president, aes(x=year, y=n)) + 
-  geom_point(aes(color = president)) +
-  facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
-  labs(title = 'Top 10 EOs counts per country and president (1950 -2021)', 
-       y = '',
-       x = 'Years',
-       subtitle = paste0('n = ', nrow(eo.top10))) +
-  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  theme_bw()
-plot.top10.president
-
-# plot the worldmap of Republican and Democrat
-country.republican <- filter(data, party == 'Republican')
-country.democrat <- filter(data, party == 'Democrat')
-
-# create a counted dataframe
-order_country <- function (party_affiliation) {
-  data %>% 
-    filter(party == party_affiliation) %>%
-    filter(!country %in% us_territories) %>%
-    group_by(country, iso) %>%
-    summarise(frequency = n()) %>% 
-    arrange(desc(frequency))
-}
-
-# create dataframes
-count.republican <- order_country("Republican")
-count.democrat <- order_country("Democrat")
-
-# # aggregated plot
-# plot_map <- function(df, n_rows, party) {
-#   ggplot(df, aes(map_id = df$iso)) +
-#     geom_map(aes(fill = frequency), map = world_map) +
-#     expand_limits(x = world_map$long, y = world_map$lat) +
-#     scale_fill_continuous(name = "Frequency") +
-#     theme_void() +
-#     coord_fixed() +
-#     scale_fill_gradientn(colors=c("#56B1F7","green","yellow","orange","#ff0000"), values = scales::rescale(c(5, 25, 100, 200, 400))) +
-#     labs(title = paste0(party, ': Frequency of countries (1950 -2021)'), 
-#          subtitle = paste0('n = ', n_rows))
-# }
-# plot_map(count.republican, nrow(country.republican), "Republican")
-# plot_map(count.democrat, nrow(country.democrat), "Democrat")
-
-# get the top 10 per party over time
-get_top10 <- function(df_count, df_country) {
-  top10 <- df_count[1:10,]
-  target <- top10$country
-  df <- filter(df_country, country %in% target)
-  df$year <- year(df$date)
-  df %>% count(year, country)
-}
-top10.republican <- get_top10(count.republican, country.republican)
-top10.democrat <- get_top10(count.democrat, country.democrat)
+country.long <- eo.top10 %>% count(year, country)
 
 # plot top 10 over time
-plot_top10_time <- function(df, party, n_nrow) {
-  ggplot(df, aes(x=year, y=n, color = factor(country))) + 
-    geom_line() +
-    facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
-    labs(title = paste0(party, ': Top 10 EOs counts over time (1950 -2021)'), 
-         y = '',
-         x = 'Years',
-         subtitle = paste0('n = ', n_nrow)
-    ) +
-    theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-    theme_bw() + 
-    theme(legend.position = "none") 
-}
-plot_top10_time(top10.republican, "Republican", sum(top10.republican$n))
-plot_top10_time(top10.democrat, "Democrat", sum(top10.democrat$n))
+plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country))) + 
+  geom_line() +
+  facet_grid(rows = vars(reorder(country, -n)), scales = 'free') +
+  labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
+       y = '',
+       x = 'Years',
+       subtitle = paste0('n = ', nrow(eo.top10))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw() + 
+  theme(legend.position = "none") 
+plot.top10.time
+
+# with fixed scale
+plot.top10.time <- ggplot(country.long, aes(x=year, y=n, color = factor(country))) + 
+  geom_line() +
+  facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
+  labs(title = 'Top 10 EOs counts over time (1950 -2021)', 
+       y = '',
+       x = 'Years',
+       subtitle = paste0('n = ', nrow(eo.top10))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw() + 
+  theme(legend.position = "none") 
+plot.top10.time
 
 
 # Testing Accurarcy ----
@@ -344,8 +272,26 @@ plot_top10_time(top10.democrat, "Democrat", sum(top10.democrat$n))
 set.seed(1234)
 checking_accuracy <- sample_n(data, 30)
 # get a xlsx version for easier checking
-write_xlsx(checking_accuracy,"./check_accuracy.xlsx")
+# write_xlsx(checking_accuracy,"C:\\Users\\User_name\\Desktop\\data_frame.xlsx")"
 
+# get only predicted country: CHINA
+eo.china <- filter(data, iso == 'CN')
+eo.china$text <- NULL
+fwrite(eo.china, './data/executive_orders_china.csv')
+
+# get only predicted country: HONG KONG
+eo.hongkong <- filter(data, iso == 'HK')
+eo.hongkong$text <- NULL
+fwrite(eo.hongkong, './data/executive_orders_hongkong.csv')
+
+# get only predicted country: MACAU
+eo.macau <- filter(data, iso == 'MO')
+eo.macau$text <- NULL
+fwrite(eo.macau, './data/executive_orders_macau.csv')
+
+
+
+nrow(eo.china) + nrow(eo.hongkong) + nrow(macau)
 
 # Save  ----
 #===================#¨
@@ -358,9 +304,7 @@ ggsave('plot.coef.png', path = './plots/', plot = plot.coef, device = 'png')
 ggsave('plot.map.png', path = './plots/', plot = plot.map, device = 'png')
 ggsave('plot.top10.time.png', path = './plots/', plot = plot.top10.time, device = 'png')
 ggsave('plot.top10.noUSterr.png', path = './plots/', plot = plot.top10.noUSterr, device = 'png')
-ggsave('plot.top10.party.png', path = './plots/', plot = plot.top10.party, device = 'png')
-ggsave('plot.top10.president.png', path = './plots/', plot = plot.top10.president, device = 'png')
-ggsave('plot.top10.all.png', path = './plots/', plot = plot.top10.all, device = 'png')
+ggsave('plot.topics.time.png', path = './plots/', plot = plot.topics.time, device = 'png')
 
 
 # Save new dataframe
