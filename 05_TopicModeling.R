@@ -131,7 +131,6 @@ for (i in 1:nrow(topics.df)) {
 data$year <- year(data$date) 
 topics.df <- left_join(topics.df, data, on = 'eo_number') %>% 
   select(c(eo_number, topic, year, president, party))
-topics.df[topics.df=="Demcrat"] <- "Democrat"
 
 # conver to long 
 topics.long <- topics.df %>% 
@@ -192,6 +191,20 @@ plot.top10.president.topics <- ggplot(eo.top10.president, aes(x=year, y=n)) +
   theme_bw()
 plot.top10.president.topics
 
+
+# Frequency of Topics by Party
+plot.top10.party.frequency <-   ggplot(eo.top10.party, aes(x = n, y = reorder(topic, n), fill = party)) +
+  geom_bar(stat = 'identity', position = 'dodge') + 
+  labs(title = 'Top 10 Frequency of Topics (1950 -2021)', 
+       y = '',
+       x = 'number of EOs',
+       subtitle = paste0('n = ', nrow(top.10.topics.df))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  scale_fill_manual(values=c("#0000FF", "#FF0000"))
+plot.top10.party.frequency
+
+
 # Save  ----
 #===================#¨
 
@@ -202,3 +215,4 @@ ggsave('plot.topics.png', path = './plots/', plot = plot.topics, device = 'png')
 ggsave('plot.topics.time.png', path = './plots/', plot = plot.topics.time, device = 'png')
 ggsave('plot.top10.party.topics.png', path = './plots/', plot = plot.top10.party.topics, device = 'png')
 ggsave('plot.top10.president.topics.png', path = './plots/', plot = plot.top10.president.topics, device = 'png')
+ggsave('plot.top10.party.frequency.png', path = './plots/', plot = plot.top10.party.frequency, device = 'png')
