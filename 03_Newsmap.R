@@ -198,28 +198,6 @@ plot.top10 <- ggplot(top10, aes(x = frequency, y = reorder(country, frequency)))
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black"))
 plot.top10
 
-
-# plot frequency of top 10 countries without US Territories
-us_territories <- c('Samoa', 'Puerto Rico', 'United States', 'Northern Mariana Islands', 'British Virgin Islands', 'Guam') # British Virigin Island is wrongly classified from the American Virign Islands
-top10_noUSterr <- filter(top20, !country %in% us_territories) 
-top10_noUSterr <- top10_noUSterr[1:10,]
-target <- top10_noUSterr$country
-top10_noUSterr <- filter(data, country %in% target) %>% 
-  count(country, party) %>% 
-  arrange(desc(n))
-
-plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = n, y = reorder(country, n), fill = party)) +
-  geom_bar(stat = 'identity', position = 'dodge') + 
-  labs(title = 'Top 10 Frequency of Countries without US Territories (1950 -2021)', 
-       y = '',
-       x = 'number of EOs',
-       subtitle = paste0('n = ', nrow(eo.top10))
-  ) +
-  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  scale_fill_manual(values=c("#0000FF", "#FF0000"))
-plot.top10.noUSterr
-
-
 # plot counts over times
 # count EOs per year and country
 eo.top10$year <- year(eo.top10$date)
@@ -244,6 +222,27 @@ plot.top10.all
 
 # Per Party and President ----
 #===================#
+
+# plot frequency of top 10 countries without US Territories
+us_territories <- c('Samoa', 'Puerto Rico', 'United States', 'Northern Mariana Islands', 'British Virgin Islands', 'Guam') # British Virigin Island is wrongly classified from the American Virign Islands
+top10_noUSterr <- filter(top20, !country %in% us_territories) 
+top10_noUSterr <- top10_noUSterr[1:10,]
+target <- top10_noUSterr$country
+top10_noUSterr <- filter(data, country %in% target) %>% 
+  count(country, party) %>% 
+  arrange(desc(n))
+
+plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = n, y = reorder(country, n), fill = party)) +
+  geom_bar(stat = 'identity', position = 'dodge') + 
+  labs(title = 'Top 10 Frequency of Countries without US Territories (1950 -2021)', 
+       y = '',
+       x = 'number of EOs',
+       subtitle = paste0('n = ', nrow(eo.top10))
+  ) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  scale_fill_manual(values=c("#0000FF", "#FF0000"))
+plot.top10.noUSterr
+
 
 # plot with party
 plot.top10.party <- ggplot(eo.top10.party, aes(x=year, y=n, color = factor(party))) + 
