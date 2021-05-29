@@ -198,5 +198,7 @@ plot.top10.president.topics
 # save plots
 dir.create('./plots')
 
+ggsave('plot.topics.png', path = './plots/', plot = plot.topics, device = 'png')
+ggsave('plot.topics.time.png', path = './plots/', plot = plot.topics.time, device = 'png')
 ggsave('plot.top10.party.topics.png', path = './plots/', plot = plot.top10.party.topics, device = 'png')
 ggsave('plot.top10.president.topics.png', path = './plots/', plot = plot.top10.president.topics, device = 'png')
