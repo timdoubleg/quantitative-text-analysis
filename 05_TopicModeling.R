@@ -97,7 +97,7 @@ topics.df
 
 # filter all topics for which we have more than x
 topics.df <- topics.df[topics.df$sum >250, ]
-topics.df$perc <- topics.df$sum / sum(topics.df$sum)
+topics.df$perc <- (topics.df$sum / sum(topics.df$sum)*100)
 topics.df <- topics.df %>% arrange(desc(sum))
 topics.highest <- topics.df[1:10, 'topic']
 
@@ -214,8 +214,8 @@ plot.top10.party.frequency
 # save plots
 dir.create('./plots')
 
-ggsave('plot.topics.png', path = './plots/', plot = plot.topics, device = 'png')
+ggsave('plot.topics.png', path = './plots/', plot = plot.topics,width=7.5, height=5, device = 'png')
 ggsave('plot.topics.time.png', path = './plots/', plot = plot.topics.time, device = 'png')
 ggsave('plot.top10.party.topics.png', path = './plots/', plot = plot.top10.party.topics, device = 'png')
 ggsave('plot.top10.president.topics.png', path = './plots/', plot = plot.top10.president.topics, device = 'png')
-ggsave('plot.top10.party.frequency.png', path = './plots/', plot = plot.top10.party.frequency, device = 'png')
+ggsave('plot.top10.party.frequency.png', path = './plots/', plot = plot.top10.party.frequency,width=7.5, height=5, device = 'png')
