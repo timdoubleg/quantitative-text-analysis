@@ -193,7 +193,11 @@ plot.top10.president.topics
 
 
 # Frequency of Topics by Party
-plot.top10.party.frequency <-   ggplot(eo.top10.party, aes(x = n, y = reorder(topic, n), fill = party)) +
+
+eo.top10.party.frequency <- top.10.topics.df %>% count(topic, party)
+eo.top10.president.frequency <- top.10.topics.df %>% count(topic, president)
+
+plot.top10.party.frequency <-   ggplot(eo.top10.party.frequency, aes(x = n, y = reorder(topic, n), fill = party)) +
   geom_bar(stat = 'identity', position = 'dodge') + 
   labs(title = 'Top 10 Frequency of Topics (1950 -2021)', 
        y = '',
@@ -203,7 +207,6 @@ plot.top10.party.frequency <-   ggplot(eo.top10.party, aes(x = n, y = reorder(to
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
   scale_fill_manual(values=c("#0000FF", "#FF0000"))
 plot.top10.party.frequency
-
 
 # Save  ----
 #===================#¨
