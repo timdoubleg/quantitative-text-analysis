@@ -127,11 +127,11 @@ for (i in 1:nrow(topics.df)) {
   topics.df$topic[i] <- colnames[i]
 }
 
-
 # merge with original data 
 data$year <- year(data$date) 
 topics.df <- left_join(topics.df, data, on = 'eo_number') %>% 
-  select(c(eo_number, topic, year, president))
+  select(c(eo_number, topic, year, president, party))
+topics.df[topics.df=="Demcrat"] <- "Democrat"
 
 # conver to long 
 topics.long <- topics.df %>% 
@@ -155,4 +155,48 @@ plot.topics.time <- ggplot(topics.long, aes(x=year, y=n, color = factor(topic)))
   theme(legend.position = "none") 
 plot.topics.time
 
+# Per Party and President ----
+#===================#
+top.10.topics.df <- topics.df %>% filter(topic %in% topics.highest)
 
+eo.top10.party <- top.10.topics.df %>% count(year, topic, party)
+eo.top10.president <- top.10.topics.df %>% count(year, topic, president)
+
+# plot with party
+plot.top10.party.topics <- ggplot(eo.top10.party, aes(x=year, y=n, color = factor(party))) + 
+  geom_point() +
+  facet_grid(rows = vars(reorder(topic, -n)), scales = 'fixed') +
+  labs(title = 'Top 10 EOs counts per topic and party (1950 -2021)', 
+       y = '',
+       x = 'Years',
+       subtitle = paste0('n = ', nrow(top.10.topics.df))) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw() + 
+  scale_color_manual(values=c("#0000FF", "#FF0000"))
+plot.top10.party.topics
+
+# plot with president
+# first we need to reorder the factors
+eo.top10.president$president <- factor(eo.top10.president$president, 
+                                       levels = c("Harry S. Truman", "Dwight D. Eisenhower", "John F. Kennedy", "Lyndon B. Johnson", 
+                                                  'Richard Nixon', 'Gerald R. Ford', 'Jimmy Carter', 'Ronald Reagan', 'George Bush', 
+                                                  'William J. Clinton', 'George W. Bush', 'Barack Obama', 'Donald J. Trump', 'Joseph R. Biden'))
+plot.top10.president.topics <- ggplot(eo.top10.president, aes(x=year, y=n)) + 
+  geom_point(aes(color = president)) +
+  facet_grid(rows = vars(reorder(topic, -n)), scales = 'fixed') +
+  labs(title = 'Top 10 EOs counts per topic and president (1950 -2021)', 
+       y = '',
+       x = 'Years',
+       subtitle = paste0('n = ', nrow(top.10.topics.df))) +
+  theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
+  theme_bw()
+plot.top10.president.topics
+
+# Save  ----
+#===================#¨
+
+# save plots
+dir.create('./plots')
+
+ggsave('plot.top10.party.topics.png', path = './plots/', plot = plot.top10.party.topics, device = 'png')
+ggsave('plot.top10.president.topics.png', path = './plots/', plot = plot.top10.president.topics, device = 'png')
