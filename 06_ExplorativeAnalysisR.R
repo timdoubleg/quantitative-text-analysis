@@ -77,11 +77,8 @@ str(data[1, ]$text, nchar.max = 300)
 str(data)
 
 # manual exclusion of words
-presidents <- tolower(unique(data$president))
-presidents <- unlist(strsplit(presidents, " "))
-# create a list of words we don't want to include
 undesirable_words <- c('President', 'United', 'States', 'of', 'America', 'American', 
-                       'Executive', 'Order', 'order', 'Presidency', 'federal', 'sec', 'secretary', 'Section', 'section', 'Act', 'sec.', 
+                       'Executive', 'Order', 'order', 'Presidency', 'secretary', 'Section', 'section', 'Act', 'sec.', 
                        'Federal register')
 presidents <- (unique(data$president))
 presidents <- unlist(strsplit(presidents, " "))
@@ -125,7 +122,6 @@ data <- data %>%
 
 # Plot amount of EOs over the decades
 plot.decades <- data %>%
-  filter(decade != "NA") %>%
   group_by(decade) %>%
   summarise(number_of_eos = n()) %>%
   ggplot() + 
@@ -139,6 +135,26 @@ plot.decades <- data %>%
        subtitle = paste0('n = ', nrow(data))) +
   theme_bw()
 plot.decades
+
+# plot EOs per president
+data$president <- factor(data$president, levels = c("Harry S. Truman", "Dwight D. Eisenhower", "John F. Kennedy", "Lyndon B. Johnson", 
+                                                  'Richard Nixon', 'Gerald R. Ford', 'Jimmy Carter', 'Ronald Reagan', 'George Bush', 
+                                                  'William J. Clinton', 'George W. Bush', 'Barack Obama', 'Donald J. Trump', 'Joseph R. Biden'))
+plot.president <- data %>%
+  group_by(year, president) %>%
+  summarise(number_of_eos = n()) %>%
+  ggplot() + 
+  geom_bar(aes(x = year, y = number_of_eos, fill = president), stat = "identity")  +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.title = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(title = 'EOs per President (1950 - 2021)', 
+       y = 'EO count',
+       x = 'Year',
+       subtitle = paste0('n = ', nrow(data))) +
+  theme_bw()
+plot.president
+
 
 # count words
 full_word_count <- data %>%
@@ -199,7 +215,7 @@ plot.wordcount.hist
 
 # count top n words
 # this shows simply that we need to work with a TF-IDF to get the rare words
-eo.words %>%
+plot.freqwords <- eo.words %>%
   count(word, sort = TRUE) %>%
   top_n(25) %>%
   ungroup() %>%
@@ -213,6 +229,7 @@ eo.words %>%
   ylab("EO Count") +
   ggtitle("Most Frequently Used Words in EOs (1950 - 2021)") +
   coord_flip()
+plot.freqwords
 
 # TF-IDF, inverse document frequency
 tfidf.decade <- eo.words %>%
@@ -237,19 +254,6 @@ tfidf.eonumber <- eo.words %>%
   arrange(eo_number, tf_idf) %>%
   mutate(row = row_number())
 
-# tfidf.onlychina <- eo.words %>%
-#   left_join(data[, c('country', 'decade', 'eo_number')], on = 'eo_number') %>% 
-#   filter(country == 'China') %>%
-#   count(decade, word, sort = TRUE) %>%
-#   bind_tf_idf(word, decade, n) %>% 
-#   arrange(desc(tf_idf)) %>% 
-#   group_by(decade) %>% 
-#   slice(seq_len(10)) %>% 
-#   ungroup() %>%
-#   arrange(decade, tf_idf) %>%
-#   mutate(row = row_number())
-
-
 plot <- function(df, title) {
   ggplot(df, aes(x = row, y=tf_idf, fill = decade)) +
   geom_col(show.legend = NULL) +
@@ -268,15 +272,17 @@ plot <- function(df, title) {
 }
 
 # plot the different types
-plot(tfidf.decade, '(Grouped by decades)')
-#plot(tfidf.onlychina, '(Grouped by China)')
-
+plot.tfidf <- plot(tfidf.decade, '(Grouped by decades)')
+plot.tfidf
 
 # Save  ----
 #===================#
 dir.create('./plots')
 
-ggsave('plot_decades.png', path = './plots/', plot = plot.decades, device = 'png')
+ggsave('plot.decades.png', path = './plots/', plot = plot.decades, device = 'png')
+ggsave('plot.tfidf.png', path = './plots/', plot = plot.tfidf, device = 'png')
+ggsave('plot.president.png', path = './plots/', plot = plot.president, device = 'png', width = 7.5, height = 5)
+
 
 
 

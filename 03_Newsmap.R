@@ -200,13 +200,20 @@ plot.top10
 
 # plot counts over times
 # count EOs per year and country
+us_territories <- c('Samoa', 'Puerto Rico', 'United States', 'Northern Mariana Islands', 'British Virgin Islands', 'Guam') # British Virigin Island is wrongly classified from the American Virign Islands
+count.eo.noUSterr <- filter(data, !country %in% us_territories) 
+top10_noUSterr <- filter(top20, !country %in% us_territories) 
+top10_noUSterr <- top10_noUSterr[1:10,]
+target <- top10_noUSterr$country
+eo.top10 <- filter(data, country %in% target)
+
 eo.top10$year <- year(eo.top10$date)
 eo.top10$text <- NULL
 eo.top10.all <- eo.top10 %>% count(year, country)
 eo.top10.party <- eo.top10 %>% count(year, country, party)
 eo.top10.president <- eo.top10 %>% count(year, country, president)
 
-# plot all 
+# plot all without US territories
 plot.top10.all <- ggplot(eo.top10.all, aes(x=year, y=n, color = factor(country))) + 
   geom_line() +
   facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
@@ -224,10 +231,6 @@ plot.top10.all
 #===================#
 
 # plot frequency of top 10 countries without US Territories
-us_territories <- c('Samoa', 'Puerto Rico', 'United States', 'Northern Mariana Islands', 'British Virgin Islands', 'Guam') # British Virigin Island is wrongly classified from the American Virign Islands
-top10_noUSterr <- filter(top20, !country %in% us_territories) 
-top10_noUSterr <- top10_noUSterr[1:10,]
-target <- top10_noUSterr$country
 top10_noUSterr <- filter(data, country %in% target) %>% 
   count(country, party) %>% 
   arrange(desc(n))
@@ -237,7 +240,7 @@ plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = n, y = reorder(country, 
   labs(title = 'Top 10 Frequency of Countries without US Territories (1950 -2021)', 
        y = '',
        x = 'number of EOs',
-       subtitle = paste0('n = ', nrow(eo.top10))
+       subtitle = paste0('n = ', sum(top10_noUSterr$n))
   ) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
   scale_fill_manual(values=c("#0000FF", "#FF0000"))
@@ -336,6 +339,13 @@ plot_top10_time(top10.republican, "Republican", sum(top10.republican$n))
 plot_top10_time(top10.democrat, "Democrat", sum(top10.democrat$n))
 
 
+# Manual Analysis ----
+#===================#
+eo.iraq <- filter(eo.top10, country == 'Iraq')
+eo.china <- filter(eo.top10, country == 'China')
+nrow(filter(data, iso == 'US'))/nrow(data)
+
+
 # Testing Accurarcy ----
 #===================#
 
@@ -351,12 +361,10 @@ write_xlsx(checking_accuracy,"./check_accuracy.xlsx")
 
 # save plots
 dir.create('./plots')
-ggsave('plot_topics.png', path = './plots/', plot = plot.topics, device = 'png')
 ggsave('plot.top10.png', path = './plots/', plot = plot.top10, device = 'png')
-ggsave('plot.coef.png', path = './plots/', plot = plot.coef, device = 'png')
+ggsave('plot.coef.png', path = './plots/', plot = plot.coef, device = 'png', width = 7.5, height = 5)
 ggsave('plot.map.png', path = './plots/', plot = plot.map, device = 'png')
-ggsave('plot.top10.time.png', path = './plots/', plot = plot.top10.time, device = 'png')
-ggsave('plot.top10.noUSterr.png', path = './plots/', plot = plot.top10.noUSterr, device = 'png')
+ggsave('plot.top10.noUSterr.png', path = './plots/', plot = plot.top10.noUSterr, device = 'png', width = 7.5, height = 5)
 ggsave('plot.top10.party.png', path = './plots/', plot = plot.top10.party, device = 'png')
 ggsave('plot.top10.president.png', path = './plots/', plot = plot.top10.president, device = 'png')
 ggsave('plot.top10.all.png', path = './plots/', plot = plot.top10.all, device = 'png')
