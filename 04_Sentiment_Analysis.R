@@ -139,6 +139,8 @@ data <- sentiment_scores_afinn %>%
 
 #writing data to new CSV
 fwrite(data, './data/executive_orders_withcountry_withsentiments.csv')
+data <- fread('./data/executive_orders_withsentiments.csv')
+
 
 
 # Gathering outliers ----
@@ -194,20 +196,31 @@ summary(data$n_tokens_cleaned)
 fig_sent_comparison <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(value)) +
   geom_histogram(binwidth = .01) +
   facet_grid(rows = vars(type_of_index)) +
-  xlim(-0.8,0.8) +
+  xlim(-0.5,0.7) +
   labs(title = "Comparing the density of sentiment values by afinn and sentimentr",
-       subtitle = "n = 3918")
+       subtitle = "n = 3918") +
+  theme(strip.text = element_text(size = 15),
+        axis.title = element_text(size = 15))
+
+#sorting presidents chronologically
+data$president <- factor(data$president, 
+                         levels = c("Harry S. Truman", "Dwight D. Eisenhower", "John F. Kennedy", "Lyndon B. Johnson", 
+                                    'Richard Nixon', 'Gerald R. Ford', 'Jimmy Carter', 'Ronald Reagan', 'George Bush', 
+                                    'William J. Clinton', 'George W. Bush', 'Barack Obama', 'Donald J. Trump', 'Joseph R. Biden'))
+
 
 #temporal perspective on sentiment measures
 fig_sent_time <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=date,y=value)) +
   geom_point(aes(color=president),alpha = 0.2) +
   geom_smooth(aes(x=date,y=value),method=lm, se=FALSE) +
   facet_grid(cols = vars(type_of_index)) +
-  ylim(-0.8,0.8) +
+  ylim(-0.5,0.7) +
   theme(legend.position = "top") +
   labs(title = "Comparing sentiment values by afinn and sentimentr over time",
        subtitle = "n = 3918") +
-  guides(color = guide_legend(override.aes = list(alpha = 1)))
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  theme(strip.text = element_text(size = 15),
+      axis.title = element_text(size = 15))
 
 #boxplots for each president's average sentiment measures
 fig_sent_presidents <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=president,y=value)) +
