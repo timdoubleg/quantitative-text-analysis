@@ -195,7 +195,6 @@ plot.top10.president.topics
 # Frequency of Topics by Party
 
 eo.top10.party.frequency <- top.10.topics.df %>% count(topic, party)
-eo.top10.president.frequency <- top.10.topics.df %>% count(topic, president)
 
 plot.top10.party.frequency <-   ggplot(eo.top10.party.frequency, aes(x = n, y = reorder(topic, n), fill = party)) +
   geom_bar(stat = 'identity', position = 'dodge') + 
