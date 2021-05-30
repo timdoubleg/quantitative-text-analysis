@@ -32,10 +32,9 @@ library(here)
 library(readtext)
 library(stringr)
 library(newsmap)
-library(sentimentr)
-library(tidyr)
 library(maps)
 library(countrycode)
+library(RColorBrewer)
 
 rm(list=ls())
 
@@ -266,6 +265,11 @@ eo.top10.president$president <- factor(eo.top10.president$president,
                                        levels = c("Harry S. Truman", "Dwight D. Eisenhower", "John F. Kennedy", "Lyndon B. Johnson", 
                                                   'Richard Nixon', 'Gerald R. Ford', 'Jimmy Carter', 'Ronald Reagan', 'George Bush', 
                                                   'William J. Clinton', 'George W. Bush', 'Barack Obama', 'Donald J. Trump', 'Joseph R. Biden'))
+
+# set color palette
+colourCount = length(unique(eo.top10$president))
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
 plot.top10.president <- ggplot(eo.top10.president, aes(x=year, y=n)) + 
   geom_point(aes(color = president)) +
   facet_grid(rows = vars(reorder(country, -n)), scales = 'fixed') +
@@ -274,7 +278,8 @@ plot.top10.president <- ggplot(eo.top10.president, aes(x=year, y=n)) +
        x = 'Years',
        subtitle = paste0('n = ', nrow(eo.top10))) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  theme_bw()
+  theme_bw() +
+  scale_colour_manual(values = getPalette(colourCount))
 plot.top10.president
 
 # plot the worldmap of Republican and Democrat
