@@ -23,12 +23,12 @@ library(tidyr)
 library(maps)
 library(countrycode)
 library(ggplot2)
-library(syuzhet)
 library(tidyverse)
 library(lubridate)
 library(plotly)
 library(tibble)
-
+library(RColorBrewer)
+ 
 # Setup----
 #===================#
 rm(list=ls())
@@ -139,7 +139,6 @@ data <- sentiment_scores_afinn %>%
 
 #writing data to new CSV
 fwrite(data, './data/executive_orders_withcountry_withsentiments.csv')
-data <- fread('./data/executive_orders_withsentiments.csv')
 
 
 
@@ -187,6 +186,9 @@ fwrite(sentiment_outliers, './data/executive_orders_sentiment_outlier_validation
 #comparing with distribution in data set
 summary(data$n_tokens_cleaned)
 
+
+
+
 # Plots ----
 #===================#
 
@@ -208,6 +210,9 @@ data$president <- factor(data$president,
                                     'Richard Nixon', 'Gerald R. Ford', 'Jimmy Carter', 'Ronald Reagan', 'George Bush', 
                                     'William J. Clinton', 'George W. Bush', 'Barack Obama', 'Donald J. Trump', 'Joseph R. Biden'))
 
+# set color palette
+colourCount = length(unique(data$president))
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
 
 #temporal perspective on sentiment measures
 fig_sent_time <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=date,y=value)) +
@@ -220,7 +225,9 @@ fig_sent_time <- ggplot(data %>% gather(key = "type_of_index", value = "value", 
        subtitle = "n = 3918") +
   guides(color = guide_legend(override.aes = list(alpha = 1))) +
   theme(strip.text = element_text(size = 15),
-      axis.title = element_text(size = 15))
+      axis.title = element_text(size = 15)) +
+  scale_colour_manual(values = getPalette(colourCount))
+
 
 #boxplots for each president's average sentiment measures
 fig_sent_presidents <- ggplot(data %>% gather(key = "type_of_index", value = "value", c(sent_afinn_weighted, sentiment_valence)), aes(x=president,y=value)) +
