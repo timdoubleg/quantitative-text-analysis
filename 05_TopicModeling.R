@@ -177,7 +177,7 @@ plot.top10.party.topics <- ggplot(eo.top10.party, aes(x=year, y=n, color = facto
        subtitle = paste0('n = ', nrow(top.10.topics.df))) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
   theme_bw() + 
-  scale_color_manual(values=getPalette(colourCount))
+  scale_color_manual(values=c("#0000FF","#FF0000"))
 plot.top10.party.topics
 
 # plot with president
@@ -210,7 +210,7 @@ plot.top10.party.frequency <-   ggplot(eo.top10.party.frequency, aes(x = n, y = 
        subtitle = paste0('n = ', nrow(top.10.topics.df))
   ) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  scale_fill_manual(values=getPalette(colourCount))
+  scale_fill_manual(values=c("#0000FF","#FF0000"))
 plot.top10.party.frequency
 
 # Save  ----
