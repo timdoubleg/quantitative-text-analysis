@@ -7,7 +7,6 @@
 # Swen Hartlieb                   
 # Tim Graf                        
 
-
 # 0 Setup ----
 #===================#
 
@@ -36,6 +35,7 @@ library(sentimentr)
 library(tidyr)
 library(maps)
 library(countrycode)
+library(RColorBrewer)
 
 rm(list=ls())
 
@@ -97,7 +97,7 @@ topics.df
 
 # filter all topics for which we have more than x
 topics.df <- topics.df[topics.df$sum >250, ]
-topics.df$perc <- topics.df$sum / sum(topics.df$sum)
+topics.df$perc <- (topics.df$sum / sum(topics.df$sum)*100)
 topics.df <- topics.df %>% arrange(desc(sum))
 topics.highest <- topics.df[1:10, 'topic']
 
@@ -132,7 +132,7 @@ data$year <- year(data$date)
 topics.df <- left_join(topics.df, data, on = 'eo_number') %>% 
   select(c(eo_number, topic, year, president, party))
 
-# conver to long 
+# convert to long 
 topics.long <- topics.df %>% 
   filter(topic %in% topics.highest) %>% 
   group_by(year, topic) %>% 
@@ -162,6 +162,12 @@ eo.top10.party <- top.10.topics.df %>% count(year, topic, party)
 eo.top10.president <- top.10.topics.df %>% count(year, topic, president)
 
 # plot with party
+# set color palette
+colourCount =
+  length(unique(top.10.topics.df$president))
+getPalette =
+  colorRampPalette(brewer.pal(9,"Set1"))
+
 plot.top10.party.topics <- ggplot(eo.top10.party, aes(x=year, y=n, color = factor(party))) + 
   geom_point() +
   facet_grid(rows = vars(reorder(topic, -n)), scales = 'fixed') +
@@ -171,7 +177,7 @@ plot.top10.party.topics <- ggplot(eo.top10.party, aes(x=year, y=n, color = facto
        subtitle = paste0('n = ', nrow(top.10.topics.df))) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
   theme_bw() + 
-  scale_color_manual(values=c("#0000FF", "#FF0000"))
+  scale_color_manual(values=getPalette(colourCount))
 plot.top10.party.topics
 
 # plot with president
@@ -188,14 +194,13 @@ plot.top10.president.topics <- ggplot(eo.top10.president, aes(x=year, y=n)) +
        x = 'Years',
        subtitle = paste0('n = ', nrow(top.10.topics.df))) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  theme_bw()
+  theme_bw() +
+  scale_color_manual(values=getPalette(colourCount))
 plot.top10.president.topics
 
 
 # Frequency of Topics by Party
-
 eo.top10.party.frequency <- top.10.topics.df %>% count(topic, party)
-eo.top10.president.frequency <- top.10.topics.df %>% count(topic, president)
 
 plot.top10.party.frequency <-   ggplot(eo.top10.party.frequency, aes(x = n, y = reorder(topic, n), fill = party)) +
   geom_bar(stat = 'identity', position = 'dodge') + 
@@ -205,7 +210,7 @@ plot.top10.party.frequency <-   ggplot(eo.top10.party.frequency, aes(x = n, y = 
        subtitle = paste0('n = ', nrow(top.10.topics.df))
   ) +
   theme(plot.subtitle=element_text(size=9, hjust=0, face="italic", color="black")) +
-  scale_fill_manual(values=c("#0000FF", "#FF0000"))
+  scale_fill_manual(values=getPalette(colourCount))
 plot.top10.party.frequency
 
 # Save  ----
@@ -214,8 +219,8 @@ plot.top10.party.frequency
 # save plots
 dir.create('./plots')
 
-ggsave('plot.topics.png', path = './plots/', plot = plot.topics, device = 'png')
+ggsave('plot.topics.png', path = './plots/', plot = plot.topics,width=7.5, height=5, device = 'png')
 ggsave('plot.topics.time.png', path = './plots/', plot = plot.topics.time, device = 'png')
 ggsave('plot.top10.party.topics.png', path = './plots/', plot = plot.top10.party.topics, device = 'png')
 ggsave('plot.top10.president.topics.png', path = './plots/', plot = plot.top10.president.topics, device = 'png')
-ggsave('plot.top10.party.frequency.png', path = './plots/', plot = plot.top10.party.frequency, device = 'png')
+ggsave('plot.top10.party.frequency.png', path = './plots/', plot = plot.top10.party.frequency,width=7.5, height=5, device = 'png')
