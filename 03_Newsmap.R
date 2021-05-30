@@ -85,7 +85,7 @@ eo.label <- tokens_lookup(eo.tokens,
                           dictionary = data_dictionary_newsmap_en, 
                           levels = 3) # level 3 stands for countries
 
-# manual label filtering
+# manual label filtering isn't allowed by the authors of quanteda/newsmap
 # eo_number <- data$eo_number
 # list.value = {}
 # list.eonumber = {}
@@ -245,6 +245,10 @@ plot.top10.noUSterr <-   ggplot(top10_noUSterr, aes(x = n, y = reorder(country, 
   scale_fill_manual(values=c("#0000FF", "#FF0000"))
 plot.top10.noUSterr
 
+data.frame(get_sentiments("afinn")) %>%
+  ifelse(value<0, "negative", "positive") 
+
+  
 
 # plot with party
 plot.top10.party <- ggplot(eo.top10.party, aes(x=year, y=n, color = factor(party))) + 

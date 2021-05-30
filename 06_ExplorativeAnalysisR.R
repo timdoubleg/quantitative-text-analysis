@@ -28,6 +28,8 @@ library(tm) #text mining
 library(circlize) #already loaded, but just being comprehensive
 library(plotly) #interactive ggplot graphs
 library(stm)
+library(RColorBrewer)
+
 
 rm(list=ls())
 
@@ -136,6 +138,10 @@ plot.decades <- data %>%
   theme_bw()
 plot.decades
 
+# set color palette
+colourCount = length(unique(data$president))
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
 # plot EOs per president
 data$president <- factor(data$president, levels = c("Harry S. Truman", "Dwight D. Eisenhower", "John F. Kennedy", "Lyndon B. Johnson", 
                                                   'Richard Nixon', 'Gerald R. Ford', 'Jimmy Carter', 'Ronald Reagan', 'George Bush', 
@@ -152,7 +158,8 @@ plot.president <- data %>%
        y = 'EO count',
        x = 'Year',
        subtitle = paste0('n = ', nrow(data))) +
-  theme_bw()
+  theme_bw() + 
+  scale_fill_manual(values = getPalette(colourCount))
 plot.president
 
 
